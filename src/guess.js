@@ -2,6 +2,7 @@
 // 先找具体型号（docs/fixtures-reference.json 的 keywords），再找中英文俗称。规则见 docs/灯具资料.md 第 4 节：
 // 先频闪、灯条，再光束、染色；英文按整词匹配（PAR 不会误中 parent）；230、380 这类纯数字要同时有「光束」/beam 才算。
 import REF from '../docs/fixtures-reference.json';
+import SPK from '../docs/speakers-reference.json';
 
 export const FIXTURES = REF.map((f, i) => ({ ...f, i, role: f.renderType === 'ledBar' ? 'bar' : f.renderType }));
 
@@ -35,6 +36,11 @@ const MODEL_WORDS = FIXTURES.flatMap(f => f.keywords
   .filter(k => !f.brand.toLowerCase().includes(k.toLowerCase()) && !/^\d+$/.test(k) && k.length >= 3 && !GENERIC.has(norm(k)) && !/[\u4e00-\u9fff]/.test(k))
   .map(k => ({ k: norm(k), f })))
   .sort((a, b) => b.k.length - a.k.length);
+// 音箱型号（docs/speakers-reference.json）：只定用途（线阵 / 超低），音箱原样保留，不需要型号参数
+const SPEAKER_WORDS = SPK.flatMap(sp => sp.keywords
+  .filter(k => !sp.brand.toLowerCase().includes(k.toLowerCase()) && !/^\d+$/.test(k) && k.length >= 2 && !/[\u4e00-\u9fff]/.test(k))
+  .map(k => ({ k: norm(k), role: /sub/i.test(sp.type) || /超低/.test(sp.type) ? 'sub' : 'speaker' })))
+  .sort((a, b) => b.k.length - a.k.length);
 
 // texts：按可信程度排好的名字（型号名、组名…）。返回 { role, fixture, word } 或 null
 export function guess(texts) {
@@ -42,6 +48,8 @@ export function guess(texts) {
     const t = norm(raw);
     const m = MODEL_WORDS.find(({ k }) => has(t, k));
     if (m) return { role: m.f.role, fixture: m.f.i, word: raw.match(new RegExp(m.k.replace(/ /g, '.?'), 'i'))?.[0] || m.k };
+    const sp = SPEAKER_WORDS.find(({ k }) => has(t, k));
+    if (sp) return { role: sp.role, fixture: null, word: sp.k };
     for (const [role, words] of TERMS) {
       const w = words.find(w => has(t, w));
       if (w) return { role, fixture: null, word: w };
