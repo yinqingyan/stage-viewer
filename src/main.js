@@ -31,6 +31,7 @@ const CFG = {
   cameras: [],         // 可选：转播机位（网页里「复制机位」得到的 JSON）
   aim: null,           // 可选：{ floorBelow: 3 } 地上的灯朝上、天上的灯朝观众席，见 lights.js
   seats: { minHeight: 0.3, maxHeight: 0.6, maxLength: 1.6 },
+  unit: null,          // 可选：模型里 1 个单位是多少米（0.001 毫米、0.01 厘米、1 米、0.0254 英寸），null = 按文件自己记的或自动猜
   app: 'viewer',       // 'show' = 秀导走位版（build_html.py --show）
   ...STAGE.config,
 };
@@ -219,17 +220,20 @@ async function loadModel({ format, gzip, data }) {
   if (format === 'fbx') {
     const root = new FBXLoader().parse(buf, '');
     // FBX 内部以厘米为单位，UnitScaleFactor 是文件单位相对厘米的倍数；统一换算成米
-    root.scale.setScalar((root.userData.unitScaleFactor ?? 1) / 100);
+    // （root 可能是模型自己的总组，带着它自己的缩放，所以是乘不是设）
+    root.scale.multiplyScalar(CFG.unit ?? (root.userData.unitScaleFactor ?? 1) / 100);
     return root;
   }
   if (format === 'obj') return fitUnits(new OBJLoader().parse(new TextDecoder().decode(buf)), false);
   if (format === '3ds') return fitUnits(new TDSLoader().parse(buf, ''), true);
   if (format === 'dae') {  // Collada 自己记了单位和哪个轴朝上，读取器会换算好
     const dae = new ColladaLoader().parse(new TextDecoder().decode(buf), '');
+    if (CFG.unit) dae.scene.scale.setScalar(CFG.unit);
     dae.scene.animations = dae.animations || [];
     return dae.scene;
   }
   const gltf = await new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).parseAsync(buf, '');
+  if (CFG.unit) gltf.scene.scale.setScalar(CFG.unit);
   gltf.scene.animations = gltf.animations;
   return gltf.scene;
 }
@@ -259,7 +263,7 @@ function fitUnits(root, zUp) {
   if (zUp) root.rotation.x = -Math.PI / 2;
   const s = new THREE.Box3().setFromObject(root).getSize(new THREE.Vector3());
   const m = Math.max(s.x, s.y, s.z);
-  root.scale.setScalar(m <= 300 ? 1 : m / 100 <= 120 ? 0.01 : 0.001);
+  root.scale.setScalar(CFG.unit ?? (m <= 300 ? 1 : m / 100 <= 120 ? 0.01 : 0.001));
   return root;
 }
 

@@ -186,6 +186,10 @@
   .kinds tbody.ask select:not(.set) { border-color:rgba(244,184,96,.55); box-shadow:0 0 0 3px rgba(244,184,96,.1); }
   .tag { display:inline-block; margin-left:8px; padding:1px 8px; border-radius:999px; background:rgba(70,211,154,.12); border:1px solid rgba(70,211,154,.25); color:var(--ok); font-size:11px; font-weight:600; line-height:1.6; white-space:nowrap; vertical-align:1px; }
   /* 高级：型号下拉框和「整体」只在 #kinds.adv 时显示 */
+  .unit-fix { margin-top:14px; }
+  .unit-fix summary { display:inline-flex; align-items:center; gap:8px; cursor:pointer; color:var(--faint); font-size:14px; }
+  .unit-fix summary::before { content:"▸"; } .unit-fix[open] summary::before { content:"▾"; }
+  .unit-fix .field { margin-top:10px; max-width:520px; }
   .adv-toggle { margin-top:18px; border-top:1px solid var(--line); padding-top:12px; }
   .adv-toggle summary { display:inline-flex; align-items:center; gap:8px; }
   .adv-toggle summary::before { content:"▸"; color:var(--faint); } .adv-toggle[open] summary::before { content:"▾"; }
@@ -432,6 +436,19 @@
           </div>
         </div>
       </div>
+      <!-- 单位：默认自动，只有生成出来舞台大小不对才需要打开 -->
+      <details class="unit-fix">
+        <summary>生成的舞台太大或太小？</summary>
+        <label class="field">模型单位 <span class="hint">一般不用改。打开网页后右上角会写舞台的长宽高，和实际差了 10 倍、100 倍、1000 倍，就在这里选建模时用的单位，再生成一次。</span>
+          <select id="unit">
+            <option value="">自动（按文件里记的）</option>
+            <option value="0.001">毫米</option>
+            <option value="0.01">厘米</option>
+            <option value="1">米</option>
+            <option value="0.0254">英寸</option>
+          </select>
+        </label>
+      </details>
       <div id="ready"></div>
       <div class="out">
         <div class="file-chip">

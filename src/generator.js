@@ -74,6 +74,10 @@ addWords({
     'As in your modelling software’s front / back / left / right views. If the audience view shows the back of the stage, pick another side and generate again.',
   '前': 'Front', '后': 'Back', '左': 'Left', '右': 'Right',
   '前视图一侧': 'Front view side', '后视图一侧': 'Back view side', '左视图一侧': 'Left view side', '右视图一侧': 'Right view side',
+  '生成的舞台太大或太小？': 'Stage too big or too small?', '模型单位': 'Model units',
+  '一般不用改。打开网页后右上角会写舞台的长宽高，和实际差了 10 倍、100 倍、1000 倍，就在这里选建模时用的单位，再生成一次。':
+    'Usually leave this alone. The page shows the stage size in the top-right corner; if it is off by 10×, 100× or 1000×, pick the units you modelled in and generate again.',
+  '自动（按文件里记的）': 'Automatic (from the file)', '毫米': 'Millimetres', '厘米': 'Centimetres', '米': 'Metres', '英寸': 'Inches',
   '将导出：': 'Will save as:', '生成并下载': 'Generate and download',
   // 页脚
   '免费开源': 'Free and open source',
@@ -341,6 +345,7 @@ $('go').onclick = async () => {
     const title = projectName();
     // 生成的网页用设计师当时的界面语言
     const config = { title, lang, audience: document.querySelector('input[name=side]:checked').value };
+    if ($('unit').value) config.unit = +$('unit').value;
     let model = new Blob([bytes]), notes = [];
     const chosen = kinds.filter(k => k.role);
     for (const k of chosen) k.extra = !k.known && k.model != null ? fixtureParams(FIXTURES[k.model]) : undefined;

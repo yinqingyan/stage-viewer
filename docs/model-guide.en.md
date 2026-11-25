@@ -113,7 +113,7 @@ Re-export, drop it into the generator again, and step 1 shows the new file size.
 Bugs or feature requests? Contact: **stageviewer.app@outlook.com**
 
 - **Screens are white**: “Embed Media” was off — export again with it on.
-- **People are the wrong size**: wrong export units — use centimeters or meters.
+- **Stage too big or too small (people the wrong size)**: in step 3 of the generator open “Stage too big or too small?”, pick the units you modelled in (millimetres, centimetres, metres, inches) and generate again. The page shows the stage size in the top-right corner to check against.
 - **Machinery does not move**: “Animation” was off, or the keyframes are on a part inside the group instead of the group itself.
 - **A fixture was not recognised**: choose its role in step 2 of the generator (“Check what was found”). If copies of the same fixture were modelled separately (not copied), they may show up as different types — choose a role for each.
 - **Browsers**: Chrome, Edge or Firefox from the last two years; Safari 16.4+ (iOS 16.4+ on iPhone).

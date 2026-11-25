@@ -949,6 +949,8 @@ class FBXTreeParser {
 		if ( sceneGraph.children.length === 1 && sceneGraph.children[ 0 ].isGroup ) {
 
 			sceneGraph.children[ 0 ].animations = animations;
+			// 补丁：换成唯一的子组时带上 userData（unitScaleFactor），不然单位信息丢了，整个模型按厘米算、缩小 100 倍
+			Object.assign( sceneGraph.children[ 0 ].userData, sceneGraph.userData );
 			sceneGraph = sceneGraph.children[ 0 ];
 
 		}
