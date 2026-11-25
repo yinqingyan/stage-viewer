@@ -1,6 +1,8 @@
 // 30 秒说明动画：导出模型前要注意的 4 件事（嵌入的媒体、二进制和单位、灯具编组、机械动画）。
 // 画面是 1280×720 的舞台，按容器缩放；每一帧只由时间 t（秒）决定（render(t)），
-// 所以既能实时播放，也能逐帧截图导出视频。
+// 所以既能实时播放，也能逐帧截图导出视频。文字按 i18n 的当前语言取（mount 时定下）。
+import { L } from './i18n.js';
+
 const W = 1280, H = 720, LEN = 30;
 const clamp = x => Math.max(0, Math.min(1, x));
 const ease = x => { x = clamp(x); return x < .5 ? 2 * x * x : 1 - (-2 * x + 2) ** 2 / 2; };
@@ -8,11 +10,11 @@ const prog = (t, a, b) => ease((t - a) / (b - a));
 // 一段场景的可见度：a 开始淡入，b 开始淡出
 const vis = (t, a, b, f = .4) => clamp((t - a) / f) * clamp((b - t) / f);
 
-const SCENES = [
-  { a: 0, b: 4 }, { a: 4, b: 10, n: 1, cap: '勾选「嵌入的媒体」，屏幕画面才会显示' },
-  { a: 10, b: 15, n: 2, cap: '格式选「二进制」，单位用厘米或米' },
-  { a: 15, b: 21, n: 3, cap: '每台灯一个组，同款灯复制；外层组名就是灯光开关' },
-  { a: 21, b: 27, n: 4, cap: '会动的东西编成组，第 0 帧和最后一帧打关键帧，导出勾「动画」' },
+const scenes = () => [
+  { a: 0, b: 4 }, { a: 4, b: 10, n: 1, cap: L('勾选「嵌入的媒体」，屏幕画面才会显示', 'Tick "Embed Media" so screens show their content') },
+  { a: 10, b: 15, n: 2, cap: L('格式选「二进制」，单位用厘米或米', 'Export as Binary, in centimeters or meters') },
+  { a: 15, b: 21, n: 3, cap: L('每台灯一个组，同款灯复制；外层组名就是灯光开关', 'One group per fixture; the outer group becomes the light switch') },
+  { a: 21, b: 27, n: 4, cap: L('会动的东西编成组，第 0 帧和最后一帧打关键帧，导出勾「动画」', 'Keyframe each moving group at frame 0 and the last frame') },
   { a: 27, b: 30.5 },
 ];
 
@@ -38,24 +40,24 @@ const CSS = `
 .ex-play span { display:grid; place-items:center; width:84px; height:84px; border-radius:50%; background:linear-gradient(135deg,#7b8cff,#b07cff); font-size:34px; margin:0 auto 12px; padding-left:6px; }
 `;
 
-const HTML = `
+const html = () => `
 <div class="ex-beam" style="left:120px;transform:rotate(-20deg);background:linear-gradient(rgba(255,226,170,.45),transparent 75%)"></div>
 <div class="ex-beam" style="left:430px;transform:rotate(-6deg);background:linear-gradient(rgba(140,160,255,.4),transparent 75%)"></div>
 <div class="ex-beam" style="right:430px;transform:rotate(6deg);background:linear-gradient(rgba(186,130,255,.38),transparent 75%)"></div>
 <div class="ex-beam" style="right:120px;transform:rotate(20deg);background:linear-gradient(rgba(255,226,170,.45),transparent 75%)"></div>
 
 <div class="ex-l" data-s="0" style="left:0;right:0;top:230px;text-align:center">
-  <div style="font-size:24px;letter-spacing:.3em;color:#ffd28a">30 秒说明</div>
-  <div style="font-size:64px;font-weight:800;margin-top:18px">导出模型前，看懂这 4 件事</div>
-  <div class="ex-dim" style="font-size:28px;margin-top:18px">做对了，生成的网页才好看、才会动</div>
+  <div style="font-size:24px;letter-spacing:.3em;color:#ffd28a">${L('30 秒说明', '30-SECOND GUIDE')}</div>
+  <div style="font-size:64px;font-weight:800;margin-top:18px">${L('导出模型前，看懂这 4 件事', '4 things to check before you export')}</div>
+  <div class="ex-dim" style="font-size:28px;margin-top:18px">${L('做对了，生成的网页才好看、才会动', 'Get these right and your stage looks good — and moves')}</div>
 </div>
 
 <!-- ① 嵌入的媒体 -->
 <div class="ex-l ex-card" data-s="1" style="left:110px;top:150px;width:470px">
-  <h4>3ds Max · 导出 FBX</h4>
-  <div class="ex-row"><div class="ex-box" id="exChk1"></div><b>嵌入的媒体</b></div>
-  <div class="ex-row ex-dim"><div class="ex-box"></div>动画</div>
-  <div class="ex-row ex-dim"><div class="ex-box"></div>摄影机</div>
+  <h4>${L('3ds Max · 导出 FBX', '3ds Max · Export FBX')}</h4>
+  <div class="ex-row"><div class="ex-box" id="exChk1"></div><b>${L('嵌入的媒体', 'Embed Media')}</b></div>
+  <div class="ex-row ex-dim"><div class="ex-box"></div>${L('动画', 'Animation')}</div>
+  <div class="ex-row ex-dim"><div class="ex-box"></div>${L('摄影机', 'Cameras')}</div>
 </div>
 <div class="ex-l" data-s="1" style="left:700px;top:140px">
   <div class="ex-screen" id="exScr" style="background:#f4f4f4"></div>
@@ -64,9 +66,9 @@ const HTML = `
 
 <!-- ② 二进制、单位 -->
 <div class="ex-l ex-card" data-s="2" style="left:110px;top:160px;width:470px">
-  <h4>导出设置</h4>
-  <div class="ex-row">文件格式 <b class="ex-gold" style="margin-left:auto">二进制</b></div>
-  <div class="ex-row">单位 <b class="ex-gold" id="exUnit" style="margin-left:auto"></b></div>
+  <h4>${L('导出设置', 'Export settings')}</h4>
+  <div class="ex-row">${L('文件格式', 'File format')} <b class="ex-gold" style="margin-left:auto">${L('二进制', 'Binary')}</b></div>
+  <div class="ex-row">${L('单位', 'Units')} <b class="ex-gold" id="exUnit" style="margin-left:auto"></b></div>
 </div>
 <div class="ex-l" data-s="2" style="left:690px;top:110px;width:480px;height:360px">
   <div style="position:absolute;left:0;right:0;bottom:40px;height:16px;background:#5a5f6c;border-radius:4px"></div>
@@ -80,14 +82,14 @@ const HTML = `
 
 <!-- ③ 灯具编组 -->
 <div class="ex-l ex-card ex-tree" data-s="3" style="left:110px;top:120px;width:480px">
-  <h4>3ds Max 场景</h4>
-  <div class="ex-gold">▾ 📁 天排光束</div>
+  <h4>${L('3ds Max 场景', '3ds Max scene')}</h4>
+  <div class="ex-gold">▾ 📁 ${L('天排光束', 'Top beams')}</div>
   <div id="exLamps"></div>
 </div>
 <div class="ex-l" data-s="3" style="left:700px;top:150px">
   <div style="display:flex;gap:26px;margin-bottom:40px" id="exGlow"></div>
-  <div class="ex-dim" style="font-size:22px;margin-bottom:10px">生成的网页 · 灯光面板</div>
-  <div class="ex-sw" id="exSw"><span>天排光束</span><span class="ex-dim" id="exSwN"></span></div>
+  <div class="ex-dim" style="font-size:22px;margin-bottom:10px">${L('生成的网页 · 灯光面板', 'Generated page · Lights panel')}</div>
+  <div class="ex-sw" id="exSw"><span>${L('天排光束', 'Top beams')}</span><span class="ex-dim" id="exSwN"></span></div>
 </div>
 
 <!-- ④ 机械动画 -->
@@ -102,18 +104,18 @@ const HTML = `
     <div style="position:absolute;right:40px;top:14px;width:28px;height:28px;background:#ffd28a;transform:rotate(45deg)"></div>
     <div id="exHead" style="position:absolute;top:-10px;width:4px;height:80px;background:#ff7d72"></div>
   </div>
-  <div style="display:flex;justify-content:space-between;margin-top:10px;font-size:24px" class="ex-dim"><span>第 0 帧：初始位置</span><span>最后一帧：运动到头</span></div>
+  <div style="display:flex;justify-content:space-between;margin-top:10px;font-size:24px" class="ex-dim"><span>${L('第 0 帧：初始位置', 'Frame 0: start position')}</span><span>${L('最后一帧：运动到头', 'Last frame: end of travel')}</span></div>
 </div>
 
 <!-- 结尾 -->
 <div class="ex-l" data-s="5" style="left:0;right:0;top:200px;text-align:center">
   <div style="display:flex;justify-content:center;align-items:center;gap:40px;font-size:30px">
-    <div class="ex-card" id="exFbx">舞美.fbx</div><div class="ex-gold" style="font-size:44px">→</div>
-    <div class="ex-card">生成器</div><div class="ex-gold" style="font-size:44px">→</div>
-    <div class="ex-card ex-ok" id="exHtml">舞美.html</div>
+    <div class="ex-card" id="exFbx">${L('舞美.fbx', 'stage.fbx')}</div><div class="ex-gold" style="font-size:44px">→</div>
+    <div class="ex-card">${L('生成器', 'Generator')}</div><div class="ex-gold" style="font-size:44px">→</div>
+    <div class="ex-card ex-ok" id="exHtml">${L('舞美.html', 'stage.html')}</div>
   </div>
-  <div style="font-size:40px;font-weight:800;margin-top:50px">拖进生成器，下载 html，双击打开</div>
-  <div class="ex-dim" style="font-size:24px;margin-top:22px">有问题直接联系 stageviewer.app@outlook.com</div>
+  <div style="font-size:40px;font-weight:800;margin-top:50px">${L('拖进生成器，下载 html，双击打开', 'Drop it in, download the html, double-click to open')}</div>
+  <div class="ex-dim" style="font-size:24px;margin-top:22px">${L('有问题直接联系', 'Questions?')} stageviewer.app@outlook.com</div>
 </div>
 
 <div class="ex-l ex-cap" id="exCap"></div>
@@ -122,13 +124,14 @@ const HTML = `
 
 export function mountExplainer(host) {
   if (!document.getElementById('ex-css')) document.head.insertAdjacentHTML('beforeend', `<style id="ex-css">${CSS}</style>`);
-  host.innerHTML = `<div class="ex"><div class="ex-stage">${HTML}</div><button class="ex-play"><div><span>▶</span>播放 30 秒说明</div></button></div>`;
+  const SCENES = scenes();
+  host.innerHTML = `<div class="ex" translate="no"><div class="ex-stage">${html()}</div><button class="ex-play"><div><span>▶</span>${L('播放 30 秒说明', 'Play the 30-second guide')}</div></button></div>`;
   const root = host.querySelector('.ex'), stage = root.querySelector('.ex-stage'), btn = root.querySelector('.ex-play');
   const $ = id => stage.querySelector('#' + id);
   const layers = [...stage.querySelectorAll('[data-s]')];
   const lamps = $('exLamps'), glow = $('exGlow');
   for (let i = 0; i < 4; i++) {
-    lamps.insertAdjacentHTML('beforeend', `<div class="ex-l" style="position:relative;padding-left:40px">📦 光束灯 0${i + 1} <span class="ex-dim" style="font-size:20px">${i ? '（复制）' : '（一个组）'}</span></div>`);
+    lamps.insertAdjacentHTML('beforeend', `<div class="ex-l" style="position:relative;padding-left:40px">📦 ${L('光束灯', 'Beam')} 0${i + 1} <span class="ex-dim" style="font-size:20px">${i ? L('（复制）', '(copy)') : L('（一个组）', '(a group)')}</span></div>`);
     glow.insertAdjacentHTML('beforeend', '<div style="width:46px;height:46px;border-radius:50%;background:#2a2e38"></div>');
   }
   const fit = () => stage.style.transform = `scale(${root.clientWidth / W})`;
@@ -149,27 +152,27 @@ export function mountExplainer(host) {
     $('exChk1').style.borderColor = on1 ? '#46d39a' : '#8e94a4';
     const k = prog(t, 6.2, 7);
     $('exScr').style.background = `linear-gradient(135deg, rgba(123,140,255,${k}), rgba(176,124,255,${k})), #f4f4f4`;
-    $('exScrTxt').innerHTML = on1 ? '<span class="ex-ok">✓ 画面正常</span>' : '<span class="ex-bad">✗ 没勾：屏幕是白的</span>';
+    $('exScrTxt').innerHTML = on1 ? `<span class="ex-ok">${L('✓ 画面正常', '✓ Screen shows its content')}</span>` : `<span class="ex-bad">${L('✗ 没勾：屏幕是白的', '✗ Not ticked: the screen is white')}</span>`;
 
     // ② 单位不对，人像蚂蚁；改成厘米后正常
     const ok2 = t > 12.4, s2 = .12 + .88 * prog(t, 12.4, 13.4);
     $('exMan').style.transform = `scale(${s2})`;
-    $('exUnit').innerHTML = ok2 ? '厘米 ✓' : '<span class="ex-bad">英寸 ✗</span>';
-    $('exManTxt').innerHTML = ok2 ? '<span class="ex-ok">✓ 1.75 米的人，比例正常</span>' : '<span class="ex-bad">✗ 单位不对：人像蚂蚁</span>';
+    $('exUnit').innerHTML = ok2 ? L('厘米 ✓', 'Centimeters ✓') : `<span class="ex-bad">${L('英寸 ✗', 'Inches ✗')}</span>`;
+    $('exManTxt').innerHTML = ok2 ? `<span class="ex-ok">${L('✓ 1.75 米的人，比例正常', '✓ A 1.75 m person, right scale')}</span>` : `<span class="ex-bad">${L('✗ 单位不对：人像蚂蚁', '✗ Wrong units: people look like ants')}</span>`;
 
     // ③ 灯一台台复制出来，灯光面板出现这个组
     const n3 = Math.min(4, Math.max(0, Math.floor((t - 15.6) / .55) + 1));
     [...lamps.children].forEach((d, i) => { d.style.opacity = i < n3 ? 1 : 0; });
     [...glow.children].forEach((d, i) => { const lit = i < n3; d.style.background = lit ? '#fff3d6' : '#2a2e38'; d.style.boxShadow = lit ? '0 0 30px 10px rgba(255,226,170,.6)' : 'none'; });
     $('exSw').style.opacity = prog(t, 18, 18.6);
-    $('exSwN').textContent = `${n3 * 6} 台 光束灯`;
+    $('exSwN').textContent = L(`${n3 * 6} 台 光束灯`, `${n3 * 6} × Beam`);
 
     // ④ 播放头从第 0 帧走到最后一帧，升降台跟着升起来
     const p4 = prog(t, 22.2, 25.4);
     $('exHead').style.left = `${54 + p4 * 950}px`;
     $('exLift').style.bottom = `${p4 * 220}px`;
     $('exLiftTxt').style.bottom = `${p4 * 220 - 4}px`;
-    $('exLiftTxt').textContent = `升降台 ${(p4 * 2.5).toFixed(1)} m`;
+    $('exLiftTxt').textContent = `${L('升降台', 'Lift')} ${(p4 * 2.5).toFixed(1)} m`;
 
     // 结尾：箭头一步步亮起
     $('exFbx').style.borderColor = t > 27.4 ? '#ffd28a' : '';
@@ -181,7 +184,7 @@ export function mountExplainer(host) {
     const t = (now - start) / 1000;
     render(Math.min(t, LEN));
     if (t < LEN) raf = requestAnimationFrame(frame);
-    else { btn.hidden = false; btn.innerHTML = '<div><span>↻</span>再看一遍</div>'; }
+    else { btn.hidden = false; btn.innerHTML = `<div><span>↻</span>${L('再看一遍', 'Watch again')}</div>`; }
   };
   const play = () => { cancelAnimationFrame(raf); btn.hidden = true; start = performance.now(); raf = requestAnimationFrame(frame); };
   btn.onclick = play;

@@ -10,11 +10,13 @@ import { setupCameras } from './cameras.js';
 import { setupDirector } from './director.js';
 import { setupShow } from './show.js';
 import { setupMachines, KINDS } from './machines.js';
+import { setLang, translatePage, tr } from './i18n.js';
 
 // 构建脚本把模型和配置注入为 window.STAGE = { model: { format, gzip, data }, config }
 const STAGE = window.STAGE || {};
 const CFG = {
-  title: '舞美三维查看',
+  title: '',           // 项目名称，空 = 按语言用「舞美三维查看」/ Stage Viewer
+  lang: 'zh',          // 界面语言：'zh' | 'en'（生成器按设计师当时用的语言写进来）
   audience: '+z',      // 观众席在模型的哪一侧：'+z' | '-z' | '+x' | '-x'
   lifts: [],           // 可选：升降屏，见 SKILL.md
   fixtures: [],        // 可选：灯具（去掉几何体后按灯型画灯口和光束），见 lights.js
@@ -29,6 +31,10 @@ const CFG = {
   app: 'viewer',       // 'show' = 秀导走位版（build_html.py --show）
   ...STAGE.config,
 };
+// 英文界面：整页按 i18n.js 的词表翻译，之后各模块插进来的文字也会自动翻
+setLang(CFG.lang);
+if (CFG.lang === 'en') translatePage();
+CFG.title ||= CFG.lang === 'en' ? 'Stage Viewer' : '舞美三维查看';
 const AUDIENCE_SIDE = new URLSearchParams(location.search).get('audience') || CFG.audience;
 // 项目名：生成时的 title 是默认值，点右上角的名字可以改，存在本机。
 // 机位、走位的存储键仍用生成时的 title，改名不会丢数据
@@ -41,7 +47,7 @@ function setProjectName(n) {
 }
 try { setProjectName(localStorage.getItem(nameKey)); } catch { setProjectName(); }
 nameEl.title = '点击修改项目名称';
-nameEl.onclick = () => { const n = prompt('项目名称', projectName); if (n !== null) setProjectName(n); };
+nameEl.onclick = () => { const n = prompt(tr('项目名称'), projectName); if (n !== null) setProjectName(n); };
 
 const canvas = document.getElementById('c');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true });
@@ -451,7 +457,7 @@ function select(o) {
   const b = new THREE.Box3().setFromObject(o).getSize(new THREE.Vector3());
   const path = [];
   for (let p = o.parent; p && p !== model; p = p.parent) if (p.name) path.unshift(p.name);
-  info.innerHTML = `<b>${o.name || '未命名构件'}</b>` +
+  info.innerHTML = (o.name ? `<b translate="no">${o.name}</b>` : '<b>未命名构件</b>') +
     (path.length ? `<div><span class="k">所属组</span> ${path.join(' / ')}</div>` : '') +
     `<div><span class="k">宽×深×高</span> ${b.x.toFixed(2)} × ${b.z.toFixed(2)} × ${b.y.toFixed(2)} m</div>` +
     `<div class="hint">点击空白处取消选择</div>`;
@@ -481,7 +487,7 @@ function setupLifts() {
     const L = { o, base: o.getWorldPosition(new THREE.Vector3()), h0, h: h0, target: h0 };
     const row = document.createElement('div');
     row.className = 'lift';
-    row.innerHTML = `<div class="lift-head"><span>${label}</span><span class="k">离台面 <b>${h0.toFixed(1)}</b> m</span></div>
+    row.innerHTML = `<div class="lift-head"><span translate="no">${label}</span><span class="k">离台面 <b>${h0.toFixed(1)}</b> m</span></div>
       <div class="lift-ctl"><button data-to="${min}">降到底</button><input type="range" min="${min}" max="${max}" step="any" value="${h0}"><button data-to="${max}">升到顶</button></div>`;
     L.readout = row.querySelector('b');
     L.slider = row.querySelector('input');
@@ -502,7 +508,7 @@ function setupMachinesPanel() {
   for (const m of machines.list) {
     const row = document.createElement('div');
     row.className = 'lift';
-    row.innerHTML = `<div class="lift-head"><span></span><span class="k">${KINDS[m.kind]} · ${m.detail}</span></div>
+    row.innerHTML = `<div class="lift-head"><span translate="no"></span><span class="k">${KINDS[m.kind]} · ${m.detail}</span></div>
       <div class="lift-ctl"><button data-to="0">起点</button><input type="range" min="0" max="1" step="any" value="0"><button data-to="1">终点</button></div>`;
     row.querySelector('span').textContent = m.name.replace(/_/g, ' ');
     const slider = row.querySelector('input');
@@ -525,7 +531,7 @@ function setupLights({ groups, setOn, setBeam, setStars, setLevel }) {
     row.className = 'lg-row';
     const b = document.createElement('button');
     b.className = 'lg on';
-    b.innerHTML = `<span>${g.name}</span><span class="k">${g.count} 台 ${g.types}</span>`;
+    b.innerHTML = `<span translate="no">${g.name}</span><span class="k">${g.count} 台 ${g.types}</span>`;
     b.onclick = () => { setOn(g, !g.on); b.classList.toggle('on', g.on); dimAmbient(groups); };
     row.append(b);
     if (g.beamSwitch) {

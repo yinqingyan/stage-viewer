@@ -239,12 +239,12 @@ export function makeConfig(kinds, { objs, parent }, lib) {
     let regex = known ? known.match : '^' + esc(k.name);
     if (!same(select(regex, parts), ids)) {
       regex = '^(' + [...new Set(k.ids.map(m => esc(objs.get(m).name)))].sort().join('|') + ')$';
-      if (!same(select(regex, parts), ids)) notes.push(`${k.id}：节点名有重名，可能多选或漏选几个`);
+      if (!same(select(regex, parts), ids)) notes.push({ type: 'dup', id: k.id, name: k.name });  // 节点名有重名，可能多选或漏选几个
     }
     e.match = regex;
     if (light) { e.type = role; fixtures.push(e); }
     else { e.shape = role; e.parts = parts; props.push(e); }
-    if (!known) notes.push(`${k.id}（${k.name}）不在已知型号里，先按默认大小显示`);
+    if (!known) notes.push({ type: 'unknown', id: k.id, name: k.name });  // 不在已知型号里，先按默认大小显示
   }
   return { fixtures, props, notes };
 }

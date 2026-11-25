@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { tr } from './i18n.js';
 
 // 转播机位：在场景里放机位，画出拍摄范围（视锥），角落窗口显示该机位的 16:9 画面。
 // 按综艺转播设定：2/3 英寸传感器、变焦镜头，景别按画面里 1.75m 的人占多高来判断。
@@ -470,7 +471,7 @@ export function setupCameras({ scene, renderer, mainCamera, meshes, floorAt, sta
   function copy() {
     const text = JSON.stringify(cams.map(toJSON));
     const done = () => { hint.textContent = '已复制机位。放进配置文件的 "cameras" 后重新生成，别人打开也能看到'; hint.hidden = false; setTimeout(() => hint.hidden = true, 3500); };
-    navigator.clipboard?.writeText(text).then(done, () => { prompt('复制下面的机位配置', text); });
+    navigator.clipboard?.writeText(text).then(done, () => { prompt(tr('复制下面的机位配置'), text); });
   }
 
   // 有待放置/移动/对准时，用地面点 p 完成；返回 true 表示用掉了这次点击

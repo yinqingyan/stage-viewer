@@ -35,6 +35,9 @@
   .pill:hover { border-color:var(--accent); background:rgba(123,140,255,.1); }
   .pill.play { background:var(--grad); border-color:transparent; font-weight:600; box-shadow:0 10px 30px -12px rgba(123,140,255,.8); }
   dialog.wide { max-width:1100px; }
+  .lang { position:absolute; top:16px; right:16px; z-index:2; padding:6px 14px; background:rgba(255,255,255,.06); color:var(--text); border:1px solid var(--line2); border-radius:999px; font:inherit; font-size:13px; cursor:pointer; }
+  .lang:hover { border-color:var(--accent); }
+  html[lang=en] [data-lang=zh], html:not([lang=en]) [data-lang=en] { display:none; }
   a, .link { color:#a9b5ff; cursor:pointer; text-decoration:none; background:none; border:0; padding:0; font:inherit; }
   .link:hover { text-decoration:underline; }
 
@@ -123,6 +126,7 @@
 </style>
 </head>
 <body>
+<button id="langBtn" class="lang">English</button>
 <header class="hero">
   <div class="beam b1"></div><div class="beam b2"></div><div class="beam b3"></div><div class="beam b4"></div><div class="floor"></div>
   <span class="eyebrow">STAGE · 3D · HTML</span>
@@ -190,7 +194,7 @@
 
   <section class="step off" id="s4">
     <h2><span class="n">4</span>生成网页</h2>
-    <p class="hint">将导出：<b id="outName">—</b></p>
+    <p class="hint">将导出：<b id="outName" translate="no">—</b></p>
     <button class="go" id="go" style="margin-top:8px">生成并下载</button>
     <div id="progress"></div>
     <div id="result"></div>
@@ -206,7 +210,7 @@
 
 <dialog id="guide">
   <div class="close"><button id="closeGuide">关闭</button></div>
-  <div class="guide"><!--__GUIDE__--></div>
+  <div class="guide" translate="no"><div data-lang="zh"><!--__GUIDE__--></div><div data-lang="en"><!--__GUIDE_EN__--></div></div>
 </dialog>
 
 <script>/*__APP__*/</script>

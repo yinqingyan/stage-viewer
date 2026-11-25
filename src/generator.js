@@ -1,22 +1,91 @@
 // 设计师用的生成器：选模型 → 确认灯具桌椅 → 基本设置 → 生成单文件 html 并下载。
 // 全部在浏览器里完成，模型不离开设计师的电脑。
 // VIEWER（查看器模板，含注入标记）由 build.mjs 在本脚本之前定义。
+// 中英两种界面：页面上固定的文字查 GEN_WORDS，代码里拼的句子用 L(中文, English)；切换语言时重画这些部分。
 import { Fbx, readGraph, detect, libraryEntry, roleOf, makeConfig, strip, textures } from './fbx.js';
 import LIB from '../skill/stage-viewer/scripts/library.json';
 import { mountExplainer } from './explainer.js';
+import { lang, setLang, L, translatePage, addWords } from './i18n.js';
 
 const MARK = '<script>/*__STAGE__*/</script>';
-const ROLES = [
-  ['', '不处理'],
-  ['灯具', [['beam', '光束灯'], ['wash', '染色灯'], ['strobe', '频闪'], ['bar', '灯条']]],
-  ['桌椅', [['chair', '椅子'], ['stool', '凳子'], ['table', '桌子']]],
+const MAIL = '<a href="mailto:stageviewer.app@outlook.com">stageviewer.app@outlook.com</a>';
+const ROLES = () => [
+  ['', L('不处理', 'Leave as is')],
+  [L('灯具', 'Lights'), [['beam', L('光束灯', 'Beam')], ['wash', L('染色灯', 'Wash')], ['strobe', L('频闪', 'Strobe')], ['bar', L('灯条', 'LED bar')]]],
+  [L('桌椅', 'Furniture'), [['chair', L('椅子', 'Chair')], ['stool', L('凳子', 'Stool')], ['table', L('桌子', 'Table')]]],
 ];
 const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+const user = s => `<span translate="no">${esc(s)}</span>`;  // 设计师自己的名字（文件名、组名），不翻译
 const mb = n => (n / 1024 / 1024).toFixed(1) + ' MB';
 const tick = () => new Promise(r => setTimeout(r, 30));  // 让进度文字先画出来
 
 let file = null, bytes = null, format = '', fx = null, graph = null, kinds = [], texInfo = [];
+let stage1 = null;  // 第 1 步显示什么：'reading' | 'analyzing' | 'badType' | 'tooBig' | 'ready'（+ 附加提示）
+
+// ---------- 语言 ----------
+const LANG_KEY = 'stage-generator-lang';
+let saved = null;
+try { saved = localStorage.getItem(LANG_KEY); } catch {}
+setLang(new URLSearchParams(location.search).get('lang') || saved || (navigator.language.startsWith('zh') ? 'zh' : 'en'));
+addWords({
+  '舞美三维网页生成器': 'Stage Viewer Generator',
+  '把 3ds Max 导出的舞美模型变成一个 html 文件。双击就能在电脑、手机上三维浏览，走进观众席看舞台，发微信、邮件即可分享。':
+    'Turn your 3ds Max stage model into a single html file. Double-click to explore it in 3D on a computer or phone, walk into the audience and look at the stage, and share it by email or chat.',
+  '✓ 模型只在你的电脑上处理，不会上传到任何地方': '✓ Your model is processed on your own computer and never uploaded',
+  '▶ 30 秒看懂模型要求': '▶ Model checklist in 30 seconds',
+  '📖 模型准备说明': '📖 Model preparation guide',
+  '有问题直接联系：': 'Questions? Contact us: ',
+  '选择模型': 'Choose your model',
+  '支持 FBX（推荐，3ds Max 导出时勾选「嵌入的媒体」，格式选「二进制」）和 GLB。':
+    'FBX (recommended — in 3ds Max tick “Embed Media” and choose “Binary”) or GLB.',
+  '把模型文件拖到这里': 'Drop your model file here', '或点击选择文件': 'or click to choose a file',
+  '确认灯具和桌椅': 'Confirm lights and furniture',
+  '自动找出模型里重复出现的东西。选了用途的会换成简单形状（灯口发光、光束、简单桌椅），文件会小很多。':
+    'Repeated objects in your model are found automatically. Anything you give a role is replaced by a simple shape (glowing lens, beam, simple furniture), which makes the file much smaller.',
+  '每台灯是一个组': 'One group per fixture', '同一款灯用复制出来的模型，才能被认成同一种。': 'Copy the same fixture model so all copies are recognised as one type.',
+  '外层组名 = 灯光开关名': 'Outer group name = light switch name',
+  '比如「天排光束」「舞台两侧」，会原样显示在网页的灯光面板上。': 'For example “Top beams” or “Stage sides” — shown as-is in the lights panel.',
+  '「已认出」的最准': '“Recognised” is most accurate',
+  '自己选用途的新型号，灯口先放在灯具中心、用默认大小，位置可能有偏差。': 'For new types you assign yourself, the lens sits at the fixture centre with a default size, so it may be slightly off.',
+  '拿不准就选「不处理」': 'Not sure? Choose “Leave as is”', '会按模型原样显示，只是文件大一些。': 'It is shown exactly as modelled; the file is just larger.',
+  '基本设置': 'Settings', '项目名称': 'Project name', '导出的网页文件名和网页标题都用这个名字': 'Used for the file name and the page title',
+  '比如：2027 春季发布会': 'e.g. Spring Launch 2027',
+  '观众席在舞台的哪一侧': 'Which side is the audience on?',
+  '按 3ds Max 的视图来选。不确定就用默认；打开后如果「观众席」视角看到的是舞台背面，换一侧重新生成。':
+    'Pick by 3ds Max viewport. If unsure keep the default; if the audience view shows the back of the stage, pick another side and generate again.',
+  '前': 'Front', '后': 'Back', '左': 'Left', '右': 'Right',
+  '前视图一侧（默认）': 'Front view side (default)', '后视图一侧': 'Back view side', '左视图一侧': 'Left view side', '右视图一侧': 'Right view side',
+  '升降台 · 升降屏 · 开合屏 · 旋转台': 'Lifts · lifting screens · sliding screens · turntables', '测试版': 'Beta',
+  '在 3ds Max 里给会动的东西做好关键帧动画，生成的网页右侧会出现「机械」面板，每个部件一个滑块，可以在起点和终点之间拖动或播放。':
+    'Keyframe the moving parts in 3ds Max and the generated page gets a “Machinery” panel with a slider per part, to drag or play between start and end.',
+  '一起动的东西编成一个组（开合屏的左右两半各一组），起个好懂的名字，比如「主屏-左」，这个名字会显示在面板上。':
+    'Group everything that moves together (each half of a sliding screen is its own group) and give it a clear name such as “Main screen L” — it appears in the panel.',
+  '动画打在组上：第 0 帧放在初始位置，最后一帧放到运动到头的位置。': 'Animate the group: frame 0 at the start position, the last frame at the end of travel.',
+  '导出 FBX 时勾选「动画」和「烘焙动画」。': 'When exporting FBX, tick “Animation” and “Bake Animation”.',
+  '网页按运动方向自动判断：上下动是升降，水平动是平移（开合），转动是旋转。目前用 Blender 做的模型测试通过，3ds Max 导出的模型还在验证，遇到不动或动得不对请反馈。':
+    'The direction decides the type: up/down is a lift, sideways is a slide, turning is a rotation. Tested with Blender exports; 3ds Max exports are still being verified — tell us if something does not move right.',
+  '详细做法见模型准备说明 →': 'Details in the model preparation guide →',
+  '生成网页': 'Generate', '将导出：': 'Will save as:', '生成并下载': 'Generate and download',
+  '有问题直接联系': 'Questions? Contact', '· 免费开源 ·': '· Free and open source ·', '关闭': 'Close',
+});
+translatePage();
+const langBtn = $('langBtn');
+langBtn.onclick = () => {
+  setLang(lang === 'en' ? 'zh' : 'en');
+  try { localStorage.setItem(LANG_KEY, lang); } catch {}
+  applyLang(true);
+};
+// switched：真的换了语言，说明动画要按新语言重搭
+function applyLang(switched) {
+  langBtn.textContent = lang === 'en' ? '中文' : 'English';
+  document.title = lang === 'en' ? 'Stage Viewer Generator' : '舞美三维网页生成器';
+  translatePage();
+  renderInfo();
+  renderKinds();
+  showName();
+  if (switched && explainer) { explainer.stop(); explainer = null; $('explainHost').innerHTML = ''; }
+}
 
 // ---------- 30 秒说明动画（第一次打开时才搭起来） ----------
 let explainer = null;
@@ -50,31 +119,54 @@ function stepState(n, state) {  // state: 'off' | 'on' | 'done'
   s.classList.toggle('done', state === 'done');
 }
 
-async function load(f) {
+function renderInfo() {
   const info = $('fileInfo');
+  if (!stage1 || !file) { info.innerHTML = ''; return; }
+  const name = `${user(file.name)}（${mb(file.size)}）`;
+  const { state, readErr } = stage1;
+  if (state === 'badType') { info.innerHTML = `<div class="msg bad">${L('只支持 .fbx 和 .glb。其他格式（.max、.obj、.c4d、.skp）请先导出成 FBX。', 'Only .fbx and .glb are supported. Export other formats (.max, .obj, .c4d, .skp) to FBX first.')}</div>`; return; }
+  if (state === 'tooBig') { info.innerHTML = `<div class="msg bad">${L('文件太大，浏览器读不进来。请换用电脑上的 Chrome / Edge，或先在 3ds Max 里删掉用不到的部分。', 'The file is too large for the browser. Try Chrome or Edge on a computer, or remove unused parts in 3ds Max first.')}</div>`; return; }
+  if (state === 'reading') { info.innerHTML = `<div class="msg">${name}${L('：正在读取…', ': reading…')}</div>`; return; }
+  if (state === 'analyzing') { info.innerHTML = `<div class="msg">${name}${L('：正在分析灯具和桌椅…', ': looking for lights and furniture…')}</div>`; return; }
+  let note = '';
+  if (format === 'glb') note = `<div class="msg warn">${L('GLB 模型不做灯具识别，会原样生成。', 'GLB models are not scanned for lights; they are used as-is.')}</div>`;
+  else if (readErr !== undefined) note = `<div class="msg warn">${L(`这个 FBX 不是二进制格式，或者读不懂（${esc(readErr)}），不能识别灯具，会原样生成。3ds Max 导出时「文件格式」选「二进制」可以解决。`,
+    `This FBX is not binary or could not be read (${esc(readErr)}), so lights cannot be detected and it is used as-is. Export with File format “Binary” in 3ds Max to fix this.`)}</div>`;
+  // 贴图没嵌入：网页里会是白色，提醒重新导出（不拦着，可以先生成白模版）
+  const missing = texInfo.filter(t => !t.embedded).map(t => t.file);
+  const list = `${missing.slice(0, 6).map(user).join(L('、', ', '))}${missing.length > 6 ? L(' 等', ' …') : ''}`;
+  const texNote = !texInfo.length || !missing.length ? '' : `<div class="msg warn"><b>${L(`⚠ 有 ${missing.length} 张贴图没有嵌入：`, `⚠ ${missing.length} texture(s) not embedded: `)}</b>${list}<br>
+     ${L('生成的网页里，用到这些贴图的地方会是白色或纯色（比如屏幕画面）。在 3ds Max 导出 FBX 时勾选「嵌入的媒体」后重新导出就好；也可以先继续生成看看。',
+        'Anything using them (screen content, for example) will show white or a flat colour. Re-export from 3ds Max with “Embed Media” ticked — or carry on and generate anyway.')}</div>`;
+  const texOk = texInfo.length && !missing.length ? L(` · ${texInfo.length} 张贴图已全部嵌入`, ` · all ${texInfo.length} texture(s) embedded`) : '';
+  info.innerHTML = `<div class="msg ok">✓ ${name}${texOk}</div>` + note + texNote;
+}
+
+async function load(f) {
+  file = f;
   format = f.name.toLowerCase().split('.').pop();
   [2, 3, 4].forEach(n => stepState(n, 'off'));
   $('result').innerHTML = $('progress').textContent = '';
-  if (!['fbx', 'glb'].includes(format)) {
-    info.innerHTML = `<div class="msg bad">只支持 .fbx 和 .glb。其他格式（.max、.obj、.c4d、.skp）请先导出成 FBX。</div>`;
-    return;
-  }
-  file = f;
-  info.innerHTML = `<div class="msg">${esc(f.name)}（${mb(f.size)}）：正在读取…</div>`;
+  if (!['fbx', 'glb'].includes(format)) { stage1 = { state: 'badType' }; renderInfo(); return; }
+  stage1 = { state: 'reading' };
+  renderInfo();
   await tick();
   try {
     bytes = new Uint8Array(await f.arrayBuffer());
   } catch {
-    info.innerHTML = `<div class="msg bad">文件太大，浏览器读不进来。请换用电脑上的 Chrome / Edge，或先在 3ds Max 里删掉用不到的部分。</div>`;
+    stage1 = { state: 'tooBig' };
+    renderInfo();
     return;
   }
   fx = graph = null;
   kinds = [];
   texInfo = [];
-  let note = '';
+  stage1 = { state: 'ready' };
   if (format === 'fbx') {
-    info.innerHTML = `<div class="msg">${esc(f.name)}（${mb(f.size)}）：正在分析灯具和桌椅…</div>`;
+    stage1.state = 'analyzing';
+    renderInfo();
     await tick();
+    stage1.state = 'ready';
     try {
       fx = new Fbx(bytes);
       graph = readGraph(fx);
@@ -83,19 +175,10 @@ async function load(f) {
       texInfo = textures(fx);
     } catch (e) {
       fx = graph = null;
-      note = `<div class="msg warn">这个 FBX 不是二进制格式，或者读不懂（${esc(e.message)}），不能识别灯具，会原样生成。3ds Max 导出时「文件格式」选「二进制」可以解决。</div>`;
+      stage1.readErr = e.message;
     }
-  } else {
-    note = `<div class="msg warn">GLB 模型不做灯具识别，会原样生成。</div>`;
   }
-  // 贴图没嵌入：网页里会是白色，提醒重新导出（不拦着，可以先生成白模版）
-  const missing = texInfo.filter(t => !t.embedded).map(t => t.file);
-  const texNote = !texInfo.length ? '' : missing.length
-    ? `<div class="msg warn"><b>⚠ 有 ${missing.length} 张贴图没有嵌入：</b>${missing.slice(0, 6).map(esc).join('、')}${missing.length > 6 ? ` 等` : ''}<br>
-       生成的网页里，用到这些贴图的地方会是白色或纯色（比如屏幕画面）。在 3ds Max 导出 FBX 时勾选「嵌入的媒体」后重新导出就好；也可以先继续生成看看。</div>`
-    : '';
-  const texOk = texInfo.length && !missing.length ? ` · ${texInfo.length} 张贴图已全部嵌入` : '';
-  info.innerHTML = `<div class="msg ok">✓ ${esc(f.name)}（${mb(f.size)}）${texOk}</div>` + note + texNote;
+  renderInfo();
   if (!$('title').value) $('title').value = f.name.replace(/\.[^.]+$/, '');
   showName();
   renderKinds();
@@ -105,31 +188,34 @@ async function load(f) {
 
 // ---------- 2. 确认灯具和桌椅 ----------
 function roleSelect(k) {
-  const opts = ROLES.map(([v, l]) => Array.isArray(l)
+  const opts = ROLES().map(([v, l]) => Array.isArray(l)
     ? `<optgroup label="${v}">${l.map(([v2, l2]) => `<option value="${v2}"${k.role === v2 ? ' selected' : ''}>${l2}</option>`).join('')}</optgroup>`
     : `<option value="${v}"${k.role === v ? ' selected' : ''}>${l}</option>`).join('');
   return `<select data-k="${k.id}" class="${k.role ? 'set' : ''}">${opts}</select>`;
 }
 function row(k) {
-  const where = Object.entries(k.groups).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([g, n]) => `${esc(g)} ×${n}`).join('、');
-  const more = Object.keys(k.groups).length > 3 ? ` 等 ${Object.keys(k.groups).length} 个组` : '';
-  const what = k.contains && Object.keys(k.contains).length
-    ? `<div class="k">一个整体，里面有 ${Object.entries(k.contains).map(([c, n]) => `${n} 个 ${esc(kinds.find(x => x.id === c)?.name || c)}`).join('、')}</div>`
-    : `<div class="k">每个 ${k.parts} 个部件</div>`;
-  return `<tr><td><b>${esc(k.name)}</b>${k.known ? '<span class="tag">已认出</span>' : ''}${what}</td>
-    <td class="num">${k.count} 个</td><td class="where"><span class="k">${where}${more}</span></td><td class="role">${roleSelect(k)}</td></tr>`;
+  const groups = Object.entries(k.groups).sort((a, b) => b[1] - a[1]);
+  const where = groups.slice(0, 3).map(([g, n]) => `${user(g)} ×${n}`).join(L('、', ', '));
+  const more = groups.length > 3 ? L(` 等 ${groups.length} 个组`, ` and ${groups.length - 3} more`) : '';
+  const what = Object.keys(k.contains).length
+    ? `<div class="k">${L('一个整体，里面有 ', 'A whole unit containing ')}${Object.entries(k.contains).map(([c, n]) => `${n} × ${user(kinds.find(x => x.id === c)?.name || c)}`).join(L('、', ', '))}</div>`
+    : `<div class="k">${L(`每个 ${k.parts} 个部件`, `${k.parts} parts each`)}</div>`;
+  return `<tr><td><b translate="no">${esc(k.name)}</b>${k.known ? `<span class="tag">${L('已认出', 'Recognised')}</span>` : ''}${what}</td>
+    <td class="num">${k.count}${L(' 个', '')}</td><td class="where"><span class="k">${where}${more}</span></td><td class="role">${roleSelect(k)}</td></tr>`;
 }
 function renderKinds() {
   const box = $('kinds');
-  if (!fx) { box.innerHTML = '<div class="msg">跳过这一步。</div>'; return; }
-  if (!kinds.length) { box.innerHTML = '<div class="msg">没有找到重复出现的灯具或桌椅，模型会原样显示。</div>'; return; }
+  if (!stage1 || stage1.state !== 'ready') { box.innerHTML = ''; return; }
+  if (!fx) { box.innerHTML = `<div class="msg">${L('跳过这一步。', 'Nothing to do here.')}</div>`; return; }
+  if (!kinds.length) { box.innerHTML = `<div class="msg">${L('没有找到重复出现的灯具或桌椅，模型会原样显示。', 'No repeated lights or furniture found; the model is used as-is.')}</div>`; return; }
   // 「整体」（一整排灯架、一套桌椅）一般不用管，收起来
   const main = kinds.filter(k => !Object.keys(k.contains).length), groups = kinds.filter(k => Object.keys(k.contains).length);
-  const head = '<thead><tr><th>型号</th><th>数量</th><th>在哪些组里</th><th style="width:150px">用途</th></tr></thead>';
+  const head = `<thead><tr><th>${L('型号', 'Type')}</th><th>${L('数量', 'Count')}</th><th>${L('在哪些组里', 'In groups')}</th><th style="width:150px">${L('用途', 'Role')}</th></tr></thead>`;
   const known = kinds.filter(k => k.known).length;
-  box.innerHTML = `<div class="msg ${known === main.length ? 'ok' : ''}">找到 ${main.length} 种，已自动认出 ${known} 种${known < main.length ? '，其余请选一下用途' : ''}。</div>
+  box.innerHTML = `<div class="msg ${known === main.length ? 'ok' : ''}">${L(`找到 ${main.length} 种，已自动认出 ${known} 种${known < main.length ? '，其余请选一下用途' : ''}。`,
+      `Found ${main.length} type(s); ${known} recognised automatically${known < main.length ? ' — please choose a role for the rest' : ''}.`)}</div>
     <table class="kinds">${head}<tbody>${main.map(row).join('')}</tbody></table>
-    ${groups.length ? `<details><summary>另有 ${groups.length} 种「整体」（灯架、成套桌椅等，一般不用管）</summary>
+    ${groups.length ? `<details><summary>${L(`另有 ${groups.length} 种「整体」（灯架、成套桌椅等，一般不用管）`, `${groups.length} more “whole units” (rigs, table sets — usually leave these alone)`)}</summary>
       <table class="kinds">${head}<tbody>${groups.map(row).join('')}</tbody></table></details>` : ''}`;
   box.querySelectorAll('select').forEach(s => s.onchange = () => {
     kinds.find(k => k.id === s.dataset.k).role = s.value;
@@ -160,11 +246,13 @@ $('go').onclick = async () => {
   $('result').innerHTML = '';
   try {
     const title = projectName();
-    const config = { title, audience: document.querySelector('input[name=side]:checked').value };
+    // 生成的网页用设计师当时的界面语言
+    const config = { title, lang, audience: document.querySelector('input[name=side]:checked').value };
     let model = new Blob([bytes]), notes = [];
     const chosen = kinds.filter(k => k.role);
     if (fx && chosen.length) {
-      await say(`精简 ${chosen.reduce((n, k) => n + k.count, 0)} 个灯具和桌椅…`);
+      const n = chosen.reduce((s, k) => s + k.count, 0);
+      await say(L(`精简 ${n} 个灯具和桌椅…`, `Simplifying ${n} lights and furniture…`));
       const c = makeConfig(chosen, graph, LIB);
       Object.assign(config, { fixtures: c.fixtures, props: c.props });
       // 地上的灯朝上、天上的灯朝观众席；默认只亮灯口，每组灯有自己的光束开关（默认关），不然光柱会罩住整个舞台
@@ -174,9 +262,9 @@ $('go').onclick = async () => {
       model = new Blob(r.parts);
       await say(`  ${mb(bytes.length)} → ${mb(model.size)}`);
     }
-    await say('压缩…');
+    await say(L('压缩…', 'Compressing…'));
     const gz = await new Response(model.stream().pipeThrough(new CompressionStream('gzip'))).blob();
-    await say('打包成网页…');
+    await say(L('打包成网页…', 'Building the page…'));
     const data = await toBase64(gz);
     const i = VIEWER.indexOf(MARK);
     const stage = `<script>window.STAGE={"model":{"format":"${format}","gzip":true,"data":"`;
@@ -184,16 +272,22 @@ $('go').onclick = async () => {
     const html = new Blob([VIEWER.slice(0, i), stage, data, tail, VIEWER.slice(i + MARK.length)], { type: 'text/html' });
     const name = fileName();
     const url = URL.createObjectURL(html);
-    const a = Object.assign(document.createElement('a'), { href: url, download: name, className: 'dl', textContent: `⬇ 下载 ${name}（${mb(html.size)}）` });
-    $('result').innerHTML = '<div class="msg ok">✓ 生成好了。如果没有自动下载，点下面的按钮。双击下载的文件就能在浏览器里打开。</div>';
+    const a = Object.assign(document.createElement('a'), { href: url, download: name, className: 'dl', textContent: `⬇ ${L('下载', 'Download')} ${name}（${mb(html.size)}）` });
+    a.translate = false;
+    $('result').innerHTML = `<div class="msg ok">${L('✓ 生成好了。如果没有自动下载，点下面的按钮。双击下载的文件就能在浏览器里打开。', '✓ Done. If the download did not start, use the button below. Double-click the file to open it in a browser.')}</div>`;
     $('result').append(a);
-    if (notes.length) $('result').insertAdjacentHTML('beforeend', `<div class="msg warn">${notes.map(esc).join('<br>')}</div>`);
+    const noteText = n => n.type === 'dup'
+      ? L(`${n.id}（${esc(n.name)}）：节点名有重名，可能多选或漏选几个`, `${n.id} (${esc(n.name)}): duplicate node names, a few may be missed or extra`)
+      : L(`${n.id}（${esc(n.name)}）不在已知型号里，先按默认大小显示`, `${n.id} (${esc(n.name)}) is not a known type; shown at a default size for now`);
+    if (notes.length) $('result').insertAdjacentHTML('beforeend', `<div class="msg warn" translate="no">${notes.map(noteText).join('<br>')}</div>`);
     a.click();
     stepState(4, 'done');
   } catch (e) {
     await say('');
-    $('result').innerHTML = `<div class="msg bad">生成失败：${esc(e.message)}<br>请把这段提示和模型大小发到 <a href="mailto:stageviewer.app@outlook.com">stageviewer.app@outlook.com</a>，我们来看。</div>`;
+    $('result').innerHTML = `<div class="msg bad">${L('生成失败：', 'Generation failed: ')}${esc(e.message)}<br>${L(`请把这段提示和模型大小发到 ${MAIL}，我们来看。`, `Please send this message and your model size to ${MAIL} and we will take a look.`)}</div>`;
   } finally {
     go.disabled = false;
   }
 };
+
+applyLang();

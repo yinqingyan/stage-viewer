@@ -1,0 +1,145 @@
+// 界面翻译：代码和页面里照常写中文，英文在 EN 表里查。
+// 开启后用 MutationObserver 盯着整页：新出现的文字、title/placeholder/aria-label 都按表换成英文，
+// 所以各模块里 innerHTML / textContent 写的中文不用逐个改。查不到的原样保留（漏翻只是显示中文，不会出错）。
+// 带数字的句子用 PATTERNS；用「 · 」「、」连起来的分段翻；有空格的按词翻（只换表里有的词）。
+// 用户的内容（3ds Max 里的组名、项目名、构件名）放在 translate="no" 的元素里，不翻。
+
+export let lang = 'zh';
+const CJK = /[一-鿿]/;
+
+export function setLang(l) {
+  lang = l === 'en' ? 'en' : 'zh';
+  document.documentElement.lang = lang === 'en' ? 'en' : 'zh-CN';
+}
+
+// 中英各写一句，按当前语言取（生成器自己的长句子用这个，比查表直观）
+export const L = (zh, en) => lang === 'en' ? en : zh;
+
+export function tr(s) {
+  if (lang !== 'en' || !s || !CJK.test(s)) return s;
+  const lead = s.match(/^\s*/)[0], trail = s.match(/\s*$/)[0];
+  return lead + one(s.trim()) + trail;
+}
+
+function one(s) {
+  if (s in EN) return EN[s];
+  for (const [re, f] of PATTERNS) {
+    const m = s.match(re);
+    if (m) return f(...m.slice(1));
+  }
+  if (s.includes(' · ')) return s.split(' · ').map(one).join(' · ');
+  if (s.includes('、')) return s.split('、').map(one).join(', ');
+  if (/\s/.test(s)) return s.split(/(\s+)/).map(w => EN[w] ?? w).join('');
+  return s;
+}
+
+// ---------- 整页翻译 ----------
+const ATTRS = ['title', 'placeholder', 'aria-label'];
+const orig = new WeakMap(), done = new WeakMap();  // 文字节点 / 属性的中文原文、上次写进去的译文
+const skip = n => (n.nodeType === 1 ? n : n.parentElement)?.closest('[translate=no], script, style');
+
+function fixText(n) {
+  if (skip(n)) return;
+  if (n.data !== done.get(n)) orig.set(n, n.data);  // 代码改过文字：记新的原文
+  const t = tr(orig.get(n));
+  done.set(n, t);
+  if (n.data !== t) n.data = t;
+}
+function fixAttrs(el) {
+  if (skip(el)) return;
+  let o = orig.get(el);
+  if (!o) orig.set(el, o = {});
+  for (const a of ATTRS) {
+    const v = el.getAttribute(a);
+    if (v === null) continue;
+    if (v !== o['t:' + a]) o[a] = v;
+    const t = tr(o[a]);
+    o['t:' + a] = t;
+    if (v !== t) el.setAttribute(a, t);
+  }
+}
+function walk(root) {
+  if (root.nodeType === 3) return fixText(root);
+  if (root.nodeType !== 1) return;
+  fixAttrs(root);
+  const it = document.createTreeWalker(root, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT);
+  for (let n = it.nextNode(); n; n = it.nextNode()) n.nodeType === 3 ? fixText(n) : fixAttrs(n);
+}
+
+let observer = null;
+// 按当前语言刷新整页；第一次调用时开始盯着页面变化（中文时也盯，切回英文才不会漏）
+export function translatePage() {
+  walk(document.documentElement);
+  if (observer) return;
+  observer = new MutationObserver(list => {
+    for (const m of list) {
+      if (m.type === 'characterData') fixText(m.target);
+      else if (m.type === 'attributes') fixAttrs(m.target);
+      else m.addedNodes.forEach(walk);
+    }
+  });
+  observer.observe(document.documentElement, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ATTRS });
+}
+
+// ---------- 带数字的句子 ----------
+const PATTERNS = [
+  [/^模型加载失败：(.*)$/, e => `Failed to load the model: ${e}`],
+  [/^附近 (\S+) 米内没有座位$/, r => `No seat within ${r} m`],
+  [/^(\d+) 台 (.+)$/, (n, types) => `${n} × ${one(types)}`],
+  [/^点击(平面图|地面或台面)放置「(.*)」$/, (w, what) => `Click the ${w === '平面图' ? 'plan' : 'floor or deck'} to place “${one(what)}”`],
+  [/^点击新位置移动 (.*)$/, c => `Click a new spot to move ${c}`],
+  [/^点击要拍的位置，(.*) 对准那里$/, c => `Click what to shoot — ${c} will aim there`],
+  [/^(.+)（(\S+) (\S+)）$/, (lens, kind, range) => `${lens} (${one(kind)} ${range})`],
+];
+
+// ---------- 查看器（生成的网页）----------
+const EN = {
+  // 页面
+  '舞美三维查看': 'Stage Viewer',
+  '加载舞美模型…': 'Loading the stage model…',
+  'WASD 飞行 · E/Q 升降 · Shift 加速': 'WASD fly · E/Q up/down · Shift faster',
+  'WASD 移动 · 拖动转向 · Shift 加速 · 空格 跳 · C 坐下/站起 · Esc 退出': 'WASD move · drag to turn · Shift run · Space jump · C sit/stand · Esc exit',
+  '页面里没有模型数据，请用 build_html.py 生成': 'This page has no model data. Create it with the generator.',
+  '点击修改项目名称': 'Click to rename the project',
+  '项目名称': 'Project name',
+  // 视角、显示
+  '正立面': 'Front', '左侧 45°': 'Left 45°', '右侧 45°': 'Right 45°', '平面': 'Plan',
+  '人物走动': 'Walk', '导摄模式': 'Director', '显示 ▴': 'View ▴', '显示': 'View',
+  '材质': 'Materials', '白模+线': 'Clay + edges', '屏幕内容': 'Screen content', '人物比例': 'Scale figure', '网格': 'Grid',
+  '跳': 'Jump', '坐下': 'Sit', '站起': 'Stand',
+  // 构件信息
+  '未命名构件': 'Unnamed part', '所属组': 'Group', '宽×深×高': 'W × D × H', '点击空白处取消选择': 'Click empty space to deselect',
+  // 升降屏、机械
+  '升降屏': 'Lifting screens', '离台面': 'Above deck', '降到底': 'Lower', '升到顶': 'Raise',
+  '机械': 'Machinery', '全部到起点': 'All to start', '全部到终点': 'All to end', '起点': 'Start', '终点': 'End',
+  '升降': 'Lift', '平移': 'Slide', '旋转': 'Rotate', '升': 'up', '降': 'down', '移': 'moves', '转': 'turns',
+  // 灯光
+  '灯光': 'Lights', '全开': 'All on', '全关': 'All off', '亮度': 'Brightness', '星光': 'Star filter', '光束': 'Beam',
+  '光束灯': 'Beam', '染色灯': 'Wash', '频闪': 'Strobe', '灯条': 'LED bar',
+  // 导摄
+  '测距': 'Measure', '清除测距': 'Clear', '全图': 'Fit', '剖切': 'Section', '退出导摄': 'Exit',
+  '水平': 'flat', '斜距': 'slant',
+  // 机位
+  '机位': 'Cameras', '＋ 添加机位': '+ Add camera', '◎ 焦点位': '◎ Focus point', '复制': 'Copy',
+  '焦点位': 'Focus point', '全部跟焦': 'all cameras follow', '清除焦点': 'Clear focus',
+  '长焦座机': 'Long lens', '座机': 'Studio', '摇臂': 'Jib', '轨道': 'Dolly', '游机': 'Handheld',
+  '箱式长焦': 'box lens', '演播室': 'studio', '便携': 'portable', '便携广角': 'portable wide',
+  '三脚架': 'Tripod', '机位台': 'Riser', '高机位台': 'High riser', '大摇臂': 'Large jib',
+  '大全景': 'Extreme wide', '全景': 'Wide', '中景': 'Medium', '近景': 'Close', '特写': 'Close-up',
+  '编号': 'No.', '类型': 'Type', '镜头': 'Lens', '推拉（变焦）': 'Zoom', '摇': 'Pan', '跟焦': 'follow', '俯仰': 'Tilt',
+  '高度': 'Height', '高': 'H', '预设…': 'Preset…', '长度': 'Length', '角度': 'Angle', '位置': 'Position',
+  '平行舞台': 'Parallel', '垂直': 'Square', '■ 停止': '■ Stop', '▶ 预演': '▶ Preview', '往返': 'Ping-pong',
+  '边移边摇': 'Pan while moving', '移动': 'Move', '改朝向': 'Re-aim', '删除': 'Delete', 'Esc 取消': 'Esc to cancel',
+  '点击舞台上的位置，所有机位对准那里': 'Click a spot on stage — all cameras aim there',
+  '已复制机位。放进配置文件的 "cameras" 后重新生成，别人打开也能看到': 'Cameras copied. Put them under "cameras" in the config and regenerate so others see them too.',
+  '复制下面的机位配置': 'Copy the camera config below',
+  '复制机位配置，放进配置文件 cameras': 'Copy the camera config (for the "cameras" field)',
+  '角度 0°': 'Angle 0°', '角度 90°': 'Angle 90°', '速度': 'Speed', '高度预设': 'Height preset',
+  '关：横移，朝向不变；开：边移边摇，一直对准对准点': 'Off: slide, keep the heading. On: pan to stay on the target',
+  // 秀导走位版（页面里有，暂未整体翻译）
+  '舞美图': 'Floor plan', '导入平面图': 'Import plan', '去掉': 'Remove', '图片实际宽度': 'Image width', '米': 'm',
+  '人员': 'Performers', '标记': 'Cues', '顺时针转 90°': 'Rotate 90° clockwise', '空格': 'Space',
+};
+
+// 生成器等模块补充自己的词条
+export const addWords = words => Object.assign(EN, words);
