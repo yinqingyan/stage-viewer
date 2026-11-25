@@ -29,50 +29,47 @@ let saved = null;
 try { saved = localStorage.getItem(LANG_KEY); } catch {}
 setLang(new URLSearchParams(location.search).get('lang') || saved || (navigator.language.startsWith('zh') ? 'zh' : 'en'));
 addWords({
-  '舞美三维网页生成器': 'Stage Viewer Generator',
+  // 顶栏、头图
+  '舞美三维网页生成器': 'Stage Viewer Generator', '模型准备说明': 'Model guide', '关闭': 'Close',
   '把 3ds Max 导出的舞美模型变成一个 html 文件。双击就能在电脑、手机上三维浏览，走进观众席看舞台，发微信、邮件即可分享。':
     'Turn your 3ds Max stage model into a single html file. Double-click to explore it in 3D on a computer or phone, walk into the audience and look at the stage, and share it by email or chat.',
-  '✓ 模型只在你的电脑上处理，不会上传到任何地方': '✓ Your model is processed on your own computer and never uploaded',
-  '▶ 30 秒看懂模型要求': '▶ Model checklist in 30 seconds', '30 秒看懂模型要求': 'The model checklist in 30 seconds',
-  '📖 模型准备说明': '📖 Model preparation guide',
-  '有需求和建议？认识撒库拉的直接微信，不认识的发邮件：': 'Bugs or feature requests? Contact: ',
-  '选择模型': 'Choose your model',
-  '支持 FBX（推荐，3ds Max 导出时勾选「嵌入的媒体」，格式选「二进制」）和 GLB。':
-    'FBX (recommended — in 3ds Max tick “Embed Media” and choose “Binary”) or GLB.',
-  '把模型文件拖到这里': 'Drop your model file here', '或点击选择文件': 'or click to choose a file',
+  '模型只在你的电脑上处理，不会上传到任何地方': 'Your model is processed on your own computer and never uploaded',
+  '全程在浏览器里完成，免费开源': 'Everything runs in your browser — free and open source',
+  '第一次用？先看导出要求': 'First time? Read the export checklist',
+  // 导出前
+  '导出模型前，在 3ds Max 里做对 4 件事': 'Four things to get right in 3ds Max before you export',
+  '做对了，生成的网页才有画面、认得出灯、会动。': 'Get these right and your stage shows its screens, recognises its lights and moves.',
+  '勾选「嵌入的媒体」': 'Tick “Embed Media”', '屏幕画面和贴图才会显示，不然是白模。': 'Otherwise screen content and textures are missing and you get a plain white model.',
+  '格式选「二进制」，单位厘米或米': 'Choose “Binary”, units in centimeters or meters',
+  'ASCII 格式认不出灯具；单位错了人会像蚂蚁或巨人。': 'ASCII files cannot be scanned for lights; with wrong units people look like ants or giants.',
+  '每台灯一个组，同款灯用复制': 'One group per fixture, copy the same model',
+  '最外层的组名就是网页上的灯光开关名，比如「天排光束」「舞台两侧」。': 'The outermost group name becomes the light switch on the page, e.g. “Top beams” or “Stage sides”.',
+  '会动的机械：编成组，打关键帧': 'Moving machinery: group it and keyframe it', '测试版': 'Beta',
+  '第 0 帧放起点、最后一帧放终点，导出时勾「动画」和「烘焙动画」。网页里会多一个机械面板，每个部件一个滑块。':
+    'Frame 0 at the start, the last frame at the end of travel; tick “Animation” and “Bake Animation” when exporting. The page gets a machinery panel with a slider per part.',
+  '看 30 秒动画': 'Watch the 30-second animation', '完整的模型准备说明 →': 'Full model preparation guide →',
+  '30 秒动画，讲的就是上面 4 件事': 'The 30-second animation covers the same 4 points',
+  // 四步
+  '四步，做出你的三维舞台': 'Four steps to your 3D stage',
+  '选择模型': 'Choose your model', '把模型文件拖到这里': 'Drop your model file here', '或点击选择文件': 'or click to choose a file',
+  '只在本机读取，不会上传': 'Read locally, never uploaded',
   '确认灯具和桌椅': 'Confirm lights and furniture',
-  '自动找出模型里重复出现的东西。选了用途的会换成简单形状（灯口发光、光束、简单桌椅），文件会小很多。':
-    'Repeated objects in your model are found automatically. Anything you give a role is replaced by a simple shape (glowing lens, beam, simple furniture), which makes the file much smaller.',
-  '每台灯是一个组': 'One group per fixture', '同一款灯用复制出来的模型，才能被认成同一种。': 'Copy the same fixture model so all copies are recognised as one type.',
-  '外层组名 = 灯光开关名': 'Outer group name = light switch name',
-  '比如「天排光束」「舞台两侧」，会原样显示在网页的灯光面板上。': 'For example “Top beams” or “Stage sides” — shown as-is in the lights panel.',
-  '「已认出」的最准': '“Recognised” is most accurate',
-  '自己选用途的新型号，灯口先放在灯具中心、用默认大小，位置可能有偏差。': 'For new types you assign yourself, the lens sits at the fixture centre with a default size, so it may be slightly off.',
-  '拿不准就选「不处理」': 'Not sure? Choose “Leave as is”', '会按模型原样显示，只是文件大一些。': 'It is shown exactly as modelled; the file is just larger.',
+  '自动找出模型里重复出现的灯具和桌椅，换成简单形状（灯口发光、光束、简单桌椅），文件会小很多。':
+    'Repeated lights and furniture are found automatically and replaced by simple shapes (glowing lens, beam, simple furniture), which makes the file much smaller.',
+  '「已认出」的不用管；没认出的选一个用途。拿不准就选「不处理」，会按模型原样显示，只是文件大一些。':
+    '“Recognised” ones need nothing from you; choose a role for the rest. Not sure? “Leave as is” keeps it exactly as modelled — the file is just larger.',
   '基本设置': 'Settings', '项目名称': 'Project name', '导出的网页文件名和网页标题都用这个名字': 'Used for the file name and the page title',
   '比如：2027 春季发布会': 'e.g. Spring Launch 2027',
   '观众席在舞台的哪一侧': 'Which side is the audience on?',
-  '按 3ds Max 的视图来选。不确定就用默认；打开后如果「观众席」视角看到的是舞台背面，换一侧重新生成。':
+  '按 3ds Max 的视图选。不确定就用默认；打开后「观众席」视角要是看到舞台背面，换一侧重新生成。':
     'Pick by 3ds Max viewport. If unsure keep the default; if the audience view shows the back of the stage, pick another side and generate again.',
   '前': 'Front', '后': 'Back', '左': 'Left', '右': 'Right',
   '前视图一侧（默认）': 'Front view side (default)', '后视图一侧': 'Back view side', '左视图一侧': 'Left view side', '右视图一侧': 'Right view side',
-  '升降台 · 升降屏 · 开合屏 · 旋转台': 'Lifts · lifting screens · sliding screens · turntables', '测试版': 'Beta',
-  '在 3ds Max 里给会动的东西做好关键帧动画，生成的网页右侧会出现「机械」面板，每个部件一个滑块，可以在起点和终点之间拖动或播放。':
-    'Keyframe the moving parts in 3ds Max and the generated page gets a “Machinery” panel with a slider per part, to drag or play between start and end.',
-  '一起动的东西编成一个组（开合屏的左右两半各一组），起个好懂的名字，比如「主屏-左」，这个名字会显示在面板上。':
-    'Group everything that moves together (each half of a sliding screen is its own group) and give it a clear name such as “Main screen L” — it appears in the panel.',
-  '动画打在组上：第 0 帧放在初始位置，最后一帧放到运动到头的位置。': 'Animate the group: frame 0 at the start position, the last frame at the end of travel.',
-  '导出 FBX 时勾选「动画」和「烘焙动画」。': 'When exporting FBX, tick “Animation” and “Bake Animation”.',
-  '网页按运动方向自动判断：上下动是升降，水平动是平移（开合），转动是旋转。目前用 Blender 做的模型测试通过，3ds Max 导出的模型还在验证，遇到不动或动得不对请反馈。':
-    'The direction decides the type: up/down is a lift, sideways is a slide, turning is a rotation. Tested with Blender exports; 3ds Max exports are still being verified — tell us if something does not move right.',
-  '详细做法见模型准备说明 →': 'Details in the model preparation guide →',
-  '生成网页': 'Generate', '将导出：': 'Will save as:', '生成并下载': 'Generate and download',
-  '· 免费开源 ·': '· Free and open source ·', '关闭': 'Close',
-  '模型只在你的电脑上处理，不会上传到任何地方': 'Your model is processed on your own computer and never uploaded',
-  '全程在浏览器里完成，免费开源': 'Everything runs in your browser — free and open source',
-  '模型准备说明': 'Model guide', '只在本机读取，不会上传': 'Read locally, never uploaded',
-  '四步，做出你的三维舞台': 'Four steps to your 3D stage', '怎么让识别更准': 'FOR BEST DETECTION',
-  '可选：会动的机械': 'OPTIONAL · MOVING MACHINERY', '免费开源': 'Free and open source',
+  '生成网页': 'Generate', '得到一个 html 文件，双击就能打开，发给导演和甲方。': 'You get one html file. Double-click to open it, then send it to the director or client.',
+  '将导出：': 'Will save as:', '生成并下载': 'Generate and download',
+  // 页脚
+  '免费开源': 'Free and open source',
+  '有需求和建议？认识撒库拉的直接微信，不认识的发邮件：': 'Bugs or feature requests? Contact: ',
 });
 translatePage();
 const langBtn = $('langBtn');
@@ -92,22 +89,24 @@ function applyLang(switched) {
   if (switched || !explainer) mountVideo();
 }
 
-// ---------- 30 秒说明动画：直接放在页面上，点一下播放；下面给对应语言的 MP4 下载 ----------
+// ---------- 30 秒说明动画：收在「导出前」一节里，点「看 30 秒动画」才展开并播放；下面给对应语言的 MP4 下载 ----------
 let explainer = null;
 function mountVideo() {
   explainer?.stop();
   explainer = mountExplainer($('explainHost'));
   $('videoDl').href = `video/guide-${lang}.mp4`;
   $('videoDl').textContent = L('⬇ 下载视频（MP4）', '⬇ Download video (MP4)');
-  if (location.hash === '#explainer') window.EXPLAINER = explainer;  // 录制视频用：暴露逐帧渲染
+  if (location.hash === '#explainer') { $('video').hidden = false; window.EXPLAINER = explainer; }  // 录制视频用：展开并暴露逐帧渲染
 }
 $('openExplain').onclick = () => {
-  $('video').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  const v = $('video');
+  const first = v.hidden;
+  v.hidden = false;  // 动画自己有 ResizeObserver，展开后会按容器宽度重排
+  v.scrollIntoView({ behavior: 'smooth', block: first ? 'nearest' : 'center' });
   explainer.play();
 };
 
 // ---------- 说明 ----------
-$('openGuide').onclick = () => $('guide').showModal();
 document.querySelectorAll('[data-guide]').forEach(b => b.onclick = () => $('guide').showModal());
 $('closeGuide').onclick = () => $('guide').close();
 $('guide').onclick = e => e.target === $('guide') && $('guide').close();
@@ -190,6 +189,8 @@ async function load(f) {
   renderKinds();
   stepState(1, 'done');
   [2, 3, 4].forEach(n => stepState(n, 'on'));
+  // 拖放区在首屏，载入后带着往下走到第 2 步
+  setTimeout(() => $('s2').scrollIntoView({ behavior: 'smooth', block: 'start' }), 300);
 }
 
 // ---------- 2. 确认灯具和桌椅 ----------

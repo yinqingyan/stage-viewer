@@ -32,6 +32,7 @@ The page finds repeated lights and furniture automatically and replaces them wit
 1. **One group per fixture**, and copy the same model for every fixture of the same type (fixtures from model libraries usually already are).
 2. **Group the lights by purpose**, e.g. “Top beams”, “Stage sides”, “Back wall”. **The outermost group name becomes the light switch name** on the page.
 3. The generator lists every type it found. Known types are filled in for you; for the others pick “Beam / Wash / Strobe / LED bar / Chair / Stool / Table”, or “Leave as is” if it is not a light or furniture.
+4. **“Recognised” types are the most accurate.** For a new type you assign yourself, the lens sits at the fixture centre with a default size, so it may be slightly off. Not sure? “Leave as is” keeps it exactly as modelled — the file is just larger.
 
 A model with hundreds of fixtures can be over 1 GB — that is fine; after simplifying it is usually a few dozen MB.
 
