@@ -15,7 +15,7 @@ const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;',
 const mb = n => (n / 1024 / 1024).toFixed(1) + ' MB';
 const tick = () => new Promise(r => setTimeout(r, 30));  // 让进度文字先画出来
 
-let file = null, bytes = null, format = '', fx = null, graph = null, kinds = [];
+let file = null, bytes = null, format = '', fx = null, graph = null, kinds = [], aiNote = '';
 
 // ---------- 说明 ----------
 $('openGuide').onclick = () => $('guide').showModal();
@@ -27,7 +27,10 @@ const AI_KEY = 'stage-generator-ai';
 let ai = {};
 try { ai = JSON.parse(localStorage.getItem(AI_KEY)) || {}; } catch {}
 const aiReady = () => ai.base && ai.key && ai.model;
-const showAiState = () => $('aiState').textContent = aiReady() ? `已设置（${ai.model}）` : '未设置';
+const showAiState = () => {
+  $('aiState').textContent = aiReady() ? `已设置 · ${ai.model}` : '未设置';
+  $('aiState').classList.toggle('on', !!aiReady());
+};
 showAiState();
 $('openAi').onclick = () => {
   $('aiBase').value = ai.base || ''; $('aiKey').value = ai.key || ''; $('aiModel').value = ai.model || '';
@@ -147,6 +150,7 @@ async function load(f) {
   }
   fx = graph = null;
   kinds = [];
+  aiNote = '';
   let note = '';
   if (format === 'fbx') {
     info.innerHTML = `<div class="msg">${esc(f.name)}（${mb(f.size)}）：正在分析灯具和桌椅…</div>`;
@@ -194,10 +198,11 @@ function renderKinds() {
   // 「整体」（一整排灯架、一套桌椅）一般不用管，收起来
   const main = kinds.filter(k => !Object.keys(k.contains).length), groups = kinds.filter(k => Object.keys(k.contains).length);
   const head = '<thead><tr><th>型号</th><th>数量</th><th>在哪些组里</th><th style="width:150px">用途</th></tr></thead>';
-  const known = kinds.filter(k => k.known).length;
+  const known = kinds.filter(k => k.known).length, unknown = main.filter(k => !k.known).length;
   box.innerHTML = `<div class="msg ${known === main.length ? 'ok' : ''}">找到 ${main.length} 种，已自动认出 ${known} 种${known < main.length ? '，其余请选一下用途' : ''}。</div>
-    ${kinds.some(k => !k.known) ? `<div class="ai-row"><button class="go" id="askAi">🤖 让 AI 判断没认出的</button>
-      <span class="hint" id="aiHint">${aiReady() ? '只发送型号名字、数量和分组名' : '需要先设置 AI 助手（页面顶部）'}</span></div>` : ''}
+    ${unknown ? `<div class="ai-box"><div class="txt"><b>🤖 有 ${unknown} 种没认出来，可以让 AI 帮你判断</b>
+      <span class="hint">${aiNote || (aiReady() ? `用你设置的 ${esc(ai.model)}，只发送型号名字、数量和分组名，不发送模型` : '用你自己的 AI 服务（OpenAI 格式的 API），设置一次就行。也可以不用 AI，直接在下面的下拉框里选。')}</span></div>
+      <button class="go" id="askAi">${aiReady() ? '让 AI 判断' : '设置 AI 助手'}</button></div>` : ''}
     <table class="kinds">${head}<tbody>${main.map(row).join('')}</tbody></table>
     ${groups.length ? `<details><summary>另有 ${groups.length} 种「整体」（灯架、成套桌椅等，一般不用管）</summary>
       <table class="kinds">${head}<tbody>${groups.map(row).join('')}</tbody></table></details>` : ''}`;
@@ -205,16 +210,15 @@ function renderKinds() {
   if (btn) btn.onclick = async () => {
     if (!aiReady()) return $('openAi').click();
     btn.disabled = true;
-    $('aiHint').textContent = 'AI 正在判断…';
+    btn.textContent = 'AI 正在判断…';
     try {
       const got = await askAi();
       for (const [id, { role, reason }] of Object.entries(got)) Object.assign(kinds.find(k => k.id === id), { role, why: `${ROLE_NAMES[role]}：${reason || ''}` });
-      renderKinds();
-      $('aiHint').textContent = `AI 给出了 ${Object.keys(got).length} 种的建议，请检查一下，不对可以改`;
+      aiNote = `<span style="color:var(--ok)">AI 给出了 ${Object.keys(got).length} 种的建议（表格里 🤖 标着理由），请检查一下，不对可以改</span>`;
     } catch (e) {
-      btn.disabled = false;
-      $('aiHint').innerHTML = `<span style="color:var(--bad)">${esc(e.message)}</span>`;
+      aiNote = `<span style="color:var(--bad)">${esc(e.message)}</span>`;
     }
+    renderKinds();
   };
   box.querySelectorAll('select').forEach(s => s.onchange = () => {
     kinds.find(k => k.id === s.dataset.k).role = s.value;
