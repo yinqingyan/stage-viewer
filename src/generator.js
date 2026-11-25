@@ -147,7 +147,10 @@ function renderInfo() {
      ${L('生成的网页里，用到这些贴图的地方会是白色或纯色（比如屏幕画面）。在 3ds Max 导出 FBX 时勾选「嵌入的媒体」后重新导出就好；也可以先继续生成看看。',
         'Anything using them (screen content, for example) will show white or a flat colour. Re-export from 3ds Max with “Embed Media” ticked — or carry on and generate anyway.')}</div>`;
   const texOk = texInfo.length && !missing.length ? L(` · ${texInfo.length} 张贴图已全部嵌入`, ` · all ${texInfo.length} texture(s) embedded`) : '';
-  info.innerHTML = `<div class="msg ok">✓ ${name}${texOk}</div>` + note + texNote;
+  // 模型大：先靠第 2 步精简灯具桌椅，还大就看说明第六节（网页大小约等于精简后的 FBX）
+  const big = file.size > 100 * 1024 * 1024 ? `<div class="msg warn">${L(`模型有 ${mb(file.size)}，生成的网页会比较大，手机可能打不开。先在第 2 步给灯具桌椅选好用途，通常能小很多；还嫌大，看「模型准备说明」第六节「模型太大怎么办」。`,
+    `This model is ${mb(file.size)}, so the page will be large and may not open on phones. Give lights and furniture a role in step 2 — that usually shrinks it a lot. Still too big? See section 6, “If the model is too big”, in the model preparation guide.`)}</div>` : '';
+  info.innerHTML = `<div class="msg ok">✓ ${name}${texOk}</div>` + note + texNote + big;
 }
 
 async function load(f) {

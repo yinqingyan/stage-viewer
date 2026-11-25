@@ -74,6 +74,27 @@ For models without animation, clicking an object in the generator to set it up i
 
 The generator asks which side of the stage the audience is on — pick Front, Back, Left or Right by 3ds Max viewport. If the audience view shows the back of the stage, pick another side and generate again.
 
+## 6. If the model is too big
+
+The generated page is roughly the size of the FBX after lights and furniture are simplified. **Aim for under 50 MB** so it opens smoothly on phones; above 100 MB some phones may fail to open it.
+
+**Easiest first: let the generator handle lights and furniture.** Give them a role in step 2 and hundreds of fixtures and seats are replaced with simple shapes. This usually saves the most, with no work in 3ds Max.
+
+**Still too big? Check these in 3ds Max, in order:**
+
+1. **Find the heaviest objects**: press **7** for viewport statistics and select objects to see their face counts, or use Utilities → Polygon Counter. A few things usually account for most of it: audience seating, plants and flowers, sculptures and decorations, imported CAD or scanned models.
+2. **Delete what nobody sees**: backstage, under-stage and behind-screen structure, hidden or frozen old versions, unused lights, cameras and helpers. Export with **Export Selected** so only the parts to show are included.
+3. **Reduce polygons**:
+   - Add a **ProOptimizer** modifier to heavy decorations and lower vertices to 20–50% — as long as you can't see the difference in the viewport.
+   - Set **TurboSmooth / MeshSmooth** iterations to 0 or 1 before exporting.
+   - Lower the **sides** of cylinders, pipes and round truss (e.g. 32 → 12).
+   - Lower **Interpolation Steps** on splines and text; fewer sides on renderable splines.
+4. **Use simple truss**: detailed truss has hundreds of faces per section, and hundreds of sections add up. From a distance, boxes or low-poly truss look the same.
+5. **Shrink textures**: no larger than 2048 px each; JPG rather than PNG for photos; remove bump/reflection maps the web page doesn't use. 1920 × 1080 is plenty for screen content.
+6. **When exporting**: untick Cameras and Lights; untick Animation if there is no machinery.
+
+Re-export, drop it into the generator again, and step 1 shows the new file size.
+
 ---
 
 ## Troubleshooting
