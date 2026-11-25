@@ -1,7 +1,7 @@
 // 设计师用的生成器：选模型 → 确认灯具桌椅 → 基本设置 → 生成单文件 html 并下载。
 // 全部在浏览器里完成，模型不离开设计师的电脑。
 // VIEWER（查看器模板，含注入标记）由 build.mjs 在本脚本之前定义。
-import { Fbx, readGraph, detect, libraryEntry, roleOf, makeConfig, strip } from './fbx.js';
+import { Fbx, readGraph, detect, libraryEntry, roleOf, makeConfig, strip, textures } from './fbx.js';
 import LIB from '../skill/stage-viewer/scripts/library.json';
 
 const MARK = '<script>/*__STAGE__*/</script>';
@@ -15,7 +15,7 @@ const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;',
 const mb = n => (n / 1024 / 1024).toFixed(1) + ' MB';
 const tick = () => new Promise(r => setTimeout(r, 30));  // 让进度文字先画出来
 
-let file = null, bytes = null, format = '', fx = null, graph = null, kinds = [], aiNote = '';
+let file = null, bytes = null, format = '', fx = null, graph = null, kinds = [], aiNote = '', texInfo = [];
 
 // ---------- 说明 ----------
 $('openGuide').onclick = () => $('guide').showModal();
@@ -152,6 +152,7 @@ async function load(f) {
   fx = graph = null;
   kinds = [];
   aiNote = '';
+  texInfo = [];
   let note = '';
   if (format === 'fbx') {
     info.innerHTML = `<div class="msg">${esc(f.name)}（${mb(f.size)}）：正在分析灯具和桌椅…</div>`;
@@ -161,6 +162,7 @@ async function load(f) {
       graph = readGraph(fx);
       kinds = detect(fx, graph);
       for (const k of kinds) k.role = k.known = roleOf(libraryEntry(k, LIB));
+      texInfo = textures(fx);
     } catch (e) {
       fx = graph = null;
       note = `<div class="msg warn">这个 FBX 不是二进制格式，或者读不懂（${esc(e.message)}），不能识别灯具，会原样生成。3ds Max 导出时「文件格式」选「二进制」可以解决。</div>`;
@@ -168,7 +170,14 @@ async function load(f) {
   } else {
     note = `<div class="msg warn">GLB 模型不做灯具识别，会原样生成。</div>`;
   }
-  info.innerHTML = `<div class="msg ok">✓ ${esc(f.name)}（${mb(f.size)}）</div>` + note;
+  // 贴图没嵌入：网页里会是白色，提醒重新导出（不拦着，可以先生成白模版）
+  const missing = texInfo.filter(t => !t.embedded).map(t => t.file);
+  const texNote = !texInfo.length ? '' : missing.length
+    ? `<div class="msg warn"><b>⚠ 有 ${missing.length} 张贴图没有嵌入：</b>${missing.slice(0, 6).map(esc).join('、')}${missing.length > 6 ? ` 等` : ''}<br>
+       生成的网页里，用到这些贴图的地方会是白色或纯色（比如屏幕画面）。在 3ds Max 导出 FBX 时勾选「嵌入的媒体」后重新导出就好；也可以先继续生成看看。</div>`
+    : '';
+  const texOk = texInfo.length && !missing.length ? ` · ${texInfo.length} 张贴图已全部嵌入` : '';
+  info.innerHTML = `<div class="msg ok">✓ ${esc(f.name)}（${mb(f.size)}）${texOk}</div>` + note + texNote;
   if (!$('title').value) $('title').value = f.name.replace(/\.[^.]+$/, '');
   showName();
   renderKinds();

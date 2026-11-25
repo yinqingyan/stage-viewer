@@ -92,6 +92,32 @@ export function readGraph(fx) {
   return { objs, parent, geoOf };
 }
 
+// 贴图有没有嵌入：贴图图片放在与 Texture 相连的 Video 节点的 Content 里，长度 > 0 才算嵌入。
+// 返回 [{ file, embedded }]，同名文件只列一次（有一处嵌入就算嵌入）
+export function textures(fx) {
+  const tops = new Map([...fx.top()].map(([o, n]) => [n, o]));
+  const tex = new Map(), videos = new Map();
+  const str = c => { if (c === undefined) return ''; const r = fx.record(c); return r.nprops && fx.u8[r.po] === 83 ? td.decode(fx.u8.subarray(r.po + 5, r.po + 5 + fx.dv.getUint32(r.po + 1, true))) : ''; };
+  for (const c of fx.children(tops.get('Objects'))) {
+    const kind = fx.record(c).name;
+    if (kind !== 'Texture' && kind !== 'Video') continue;
+    const [id] = fx.props(c, 1), kids = new Map([...fx.children(c)].map(k => [fx.record(k).name, k]));
+    if (kind === 'Texture') tex.set(id, (str(kids.get('RelativeFilename')) || str(kids.get('FileName'))).split(/[\\/]/).pop());
+    else {
+      const k = kids.get('Content'), r = k && fx.record(k);
+      videos.set(id, !!r && r.nprops > 0 && fx.u8[r.po] === 82 && fx.dv.getUint32(r.po + 1, true) > 0);  // 'R' + 长度
+    }
+  }
+  const embedded = new Set();
+  for (const c of fx.children(tops.get('Connections'))) {
+    const [, ch, pa] = fx.props(c);
+    if (videos.get(ch) && tex.has(pa)) embedded.add(pa);
+  }
+  const byFile = new Map();
+  for (const [id, file] of tex) if (file) byFile.set(file, byFile.get(file) || embedded.has(id));
+  return [...byFile].map(([file, ok]) => ({ file, embedded: ok }));
+}
+
 const prefix = name => name.replace(/\d+$/, '');
 const most = counts => Object.keys(counts).reduce((a, b) => counts[b] > counts[a] ? b : a);
 
