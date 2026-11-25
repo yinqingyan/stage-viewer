@@ -1,0 +1,31 @@
+{
+  "title": "示例舞台",
+  "audience": "+z",
+  "lifts": [
+    { "name": "Screen_Arc", "label": "弧形升降屏" },
+    { "name": "Screen_Main", "label": "主背景屏", "rise": 8 },
+    { "name": "Screen_Wagon", "label": "车台屏", "top": 5 }
+  ],
+  "materialOverrides": [
+    { "mesh": "^Truss", "color": "#d9d9d4" },
+    { "material": "^StageFloor$", "color": "#3a3a42", "glow": "#1c1c22", "reflect": 0.5 }
+  ],
+  "labels": [{ "mesh": "^Area_VIP$", "text": "贵宾区", "color": "#d8d8d8" }],
+  "textures": [{ "mesh": "^Logo_", "image": "logo.png" }],
+  "aim": { "floorBelow": 3 },
+  "lightGroups": {
+    "*": { "glowOnly": true },
+    "顶部光束": { "beamSwitch": true }
+  },
+  "fixtures": [
+    { "match": "^Group-1514655-27-", "type": "beam",   "part": "^Obj3d66-1514655-98-",  "lens": [1.2, -122.2, 70.9], "dir": [0, -0.866, 0.5], "size": 60 },
+    { "match": "^Group-1514655-1-",  "type": "wash",   "part": "^Obj3d66-1514655-2-",   "lens": [-26.6, 17.4, 0],    "dir": [-0.859, 0.512, 0], "size": 125 },
+    { "match": "^Group-1514655-31-", "type": "strobe", "part": "^Obj3d66-1514655-106-", "lens": [0, 0, 16.5],        "dir": [0, 0, 1], "size": [78, 205] },
+    { "match": "^Group-1514655-36-", "type": "bar",    "part": "^Obj3d66-1514655-130-", "lens": [-202.5, 0, 10],     "dir": [0, 0, 1], "size": [437, 32] }
+  ],
+  "props": [
+    { "match": "^3d66Group", "parts": 4, "shape": "chair", "color": "#b5121b", "box": [[-304, -305, -390], [304, 305, 390]], "seat": 450 },
+    { "match": "^3d66Group", "parts": 2, "shape": "stool", "color": "#b5121b", "box": [[-202, -200, -209], [202, 200, 209]] },
+    { "match": "^Group-13929769-2-", "shape": "table", "box": [[-671, -600, -404], [671, 600, 404]] }
+  ]
+}

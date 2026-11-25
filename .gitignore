@@ -1,0 +1,9 @@
+node_modules/
+dist/
+__pycache__/
+.DS_Store
+.fuse_hidden*
+*.fbx
+*.glb
+_存档*/
+GitHub关联步骤.md

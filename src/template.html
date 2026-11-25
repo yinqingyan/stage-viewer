@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>舞美三维查看</title>
+<style>
+  :root { --bg:#16181d; --panel:rgba(24,26,32,.88); --line:#2c303a; --text:#e6e8ee; --dim:#8b91a0; --accent:#4c8dff; }
+  * { box-sizing:border-box; }
+  html,body { margin:0; height:100%; background:var(--bg); color:var(--text); font:13px/1.4 -apple-system,"PingFang SC","Microsoft YaHei",sans-serif; overflow:hidden; }
+  #c { display:block; width:100%; height:100%; touch-action:none; }
+  .bar { position:fixed; left:12px; right:12px; bottom:12px; display:flex; flex-wrap:wrap; gap:6px; justify-content:center; pointer-events:none; }
+  .group { display:flex; gap:2px; padding:3px; background:var(--panel); border:1px solid var(--line); border-radius:8px; pointer-events:auto; backdrop-filter:blur(6px); }
+  button { background:transparent; color:var(--text); border:0; border-radius:5px; padding:7px 10px; font:inherit; cursor:pointer; white-space:nowrap; }
+  button:hover { background:#2a2e38; }
+  button.on { background:var(--accent); color:#fff; }
+  #info { position:fixed; top:12px; left:12px; max-width:min(320px,calc(100% - 24px)); padding:10px 12px; background:var(--panel); border:1px solid var(--line); border-radius:8px; display:none; }
+  #info b { display:block; font-size:14px; margin-bottom:4px; }
+  #info .k { color:var(--dim); }
+  #title { position:fixed; top:12px; right:12px; padding:8px 12px; background:var(--panel); border:1px solid var(--line); border-radius:8px; color:var(--dim); }
+  #name { cursor:pointer; color:var(--text); }
+  #loading { position:fixed; inset:0; display:grid; place-items:center; background:var(--bg); z-index:10; }
+  .hint { color:var(--dim); font-size:12px; }
+  #walkHint { position:fixed; top:12px; left:50%; transform:translateX(-50%); padding:6px 12px; background:var(--panel); border:1px solid var(--line); border-radius:8px; color:var(--dim); white-space:nowrap; display:none; }
+  #joy { position:fixed; left:24px; bottom:110px; width:120px; height:120px; border-radius:50%; background:rgba(20,22,28,.45); border:2px solid rgba(255,255,255,.35); backdrop-filter:blur(4px); display:none; touch-action:none; }
+  #joy div { position:absolute; left:50%; top:50%; width:52px; height:52px; margin:-26px 0 0 -26px; border-radius:50%; background:rgba(76,141,255,.85); box-shadow:0 2px 8px rgba(0,0,0,.4); pointer-events:none; }
+  body.walking #walkHint { display:block; }
+  #flyHint { position:fixed; left:12px; bottom:64px; color:var(--dim); font-size:12px; }
+  body.walking #flyHint { display:none; }
+  @media (pointer:coarse) { #flyHint { display:none; } }
+  #walkBtns { position:fixed; right:24px; bottom:110px; gap:10px; display:none; }
+  body.walking #walkBtns { display:flex; }
+  #walkBtns button { width:64px; height:64px; border-radius:50%; padding:0; background:rgba(20,22,28,.6); border:2px solid rgba(255,255,255,.35); backdrop-filter:blur(4px); font-size:15px; }
+  #walkBtns button.on { background:var(--accent); }
+  #side { position:fixed; top:56px; right:12px; width:250px; max-height:calc(100% - 140px); overflow:auto; display:flex; flex-direction:column; gap:8px; }
+  .panel { padding:10px 12px; background:var(--panel); border:1px solid var(--line); border-radius:8px; }
+  .sec-head { display:flex; justify-content:space-between; font-weight:600; cursor:pointer; user-select:none; }
+  .sec-head::after { content:'▾'; color:var(--dim); }
+  .closed .sec-head::after { content:'▸'; }
+  .closed .sec-body { display:none; }
+  .sec-body { margin-top:8px; }
+  .lift + .lift { margin-top:10px; }
+  .lg-row { display:flex; gap:4px; margin-top:4px; }
+  .lg { display:flex; justify-content:space-between; flex:1; min-width:0; background:#2a2e38; text-align:left; }
+  .lg-beam { padding:5px 8px; font-size:12px; background:#2a2e38; }
+  .lg-beam.on, #stars.on { background:var(--accent); }
+  .lg-all + .lg-all { margin-top:6px; }
+  .lg.on { background:#33507f; }
+  .lg .k { color:var(--dim); font-size:12px; }
+  .lg-all { display:flex; gap:6px; align-items:center; }
+  .lg-all button { background:#2a2e38; padding:5px 8px; }
+  .lg-all .k { color:var(--dim); }
+  .lg-all input { flex:1; min-width:0; accent-color:var(--accent); }
+  .lift-head { display:flex; justify-content:space-between; margin-bottom:6px; }
+  .lift-head .k { color:var(--dim); }
+  .lift-head b { color:var(--text); font-weight:600; }
+  .lift-ctl { display:flex; align-items:center; gap:6px; }
+  .lift-ctl input { flex:1; min-width:0; accent-color:var(--accent); }
+  .lift-ctl button { padding:5px 8px; background:#2a2e38; }
+  .cam-row { display:flex; gap:6px; flex-wrap:wrap; }
+  .cam-row button, .cam-types button { background:#2a2e38; padding:5px 8px; }
+  .cam-types { display:grid; grid-template-columns:1fr 1fr; gap:4px; margin-top:6px; }
+  .cam-types button { display:flex; flex-direction:column; align-items:flex-start; }
+  .cam-types .k, .cam-item .k { color:var(--dim); font-size:12px; }
+  .cam-item { display:flex; align-items:center; gap:6px; width:100%; margin-top:4px; background:#2a2e38; text-align:left; }
+  .cam-item .k { margin-left:auto; }
+  .cam-item.on { background:#33507f; }
+  .cam-item i { width:10px; height:10px; border-radius:50%; flex:none; }
+  .cam-edit { margin-top:8px; display:flex; flex-direction:column; gap:4px; }
+  .cam-edit label { display:flex; gap:6px; align-items:baseline; }
+  .cam-edit label .k { color:var(--dim); }
+  .cam-edit input { width:100%; accent-color:var(--accent); }
+  .cam-edit select { width:100%; background:#2a2e38; color:var(--text); border:1px solid var(--line); border-radius:5px; padding:5px; font:inherit; }
+  .cam-heights { display:flex; flex-wrap:wrap; gap:4px; }
+  .cam-heights button { background:#2a2e38; padding:4px 7px; font-size:12px; }
+  .cam-heights button.on { background:var(--accent); }
+  #camHint { position:fixed; top:56px; left:50%; transform:translateX(-50%); padding:8px 14px; background:var(--accent); color:#fff; border-radius:8px; z-index:5; max-width:calc(100% - 24px); }
+  #pip { position:fixed; left:12px; bottom:84px; width:min(36vw, 480px); aspect-ratio:16/9; border:2px solid #fff; border-radius:4px; cursor:pointer; box-shadow:0 4px 16px rgba(0,0,0,.5); }
+  #pip.big { width:min(70vw, 1100px); }
+  #pip .safe { position:absolute; border:1px dashed rgba(255,255,255,.55); pointer-events:none; }
+  #pip .act { inset:5%; }
+  #pip .title { inset:10%; border-color:rgba(255,207,63,.7); }
+  #pip .cross { position:absolute; left:50%; top:50%; width:16px; height:16px; margin:-8px 0 0 -8px; background:linear-gradient(#fff,#fff) center/100% 1px no-repeat, linear-gradient(#fff,#fff) center/1px 100% no-repeat; opacity:.7; pointer-events:none; }
+  #pip .pip-label { position:absolute; left:0; top:0; padding:2px 8px; background:rgba(0,0,0,.6); color:#fff; font-size:12px; border-bottom-right-radius:4px; pointer-events:none; }
+  body.walking #pip { display:none; }
+  @media (max-width:600px) { #pip { width:calc(100% - 24px); bottom:auto; top:110px; } #pip.big { width:calc(100% - 24px); } }
+  #dpBar { position:fixed; left:50%; bottom:12px; transform:translateX(-50%); display:flex; flex-wrap:wrap; justify-content:center; align-items:center; gap:4px; padding:4px 8px; background:var(--panel); border:1px solid var(--line); border-radius:8px; max-width:calc(100% - 24px); }
+  #dpBar[hidden] { display:none; }
+  #dpBar button { background:#2a2e38; }
+  #dpBar button.on { background:var(--accent); }
+  #dpBar input { width:90px; accent-color:var(--accent); }
+  #dpBar label, #dpBar span { color:var(--dim); }
+  .dp-title { color:var(--text) !important; font-weight:600; margin-right:4px; }
+  #dpLabels { position:fixed; inset:0; pointer-events:none; overflow:hidden; }
+  .dp-label { position:absolute; left:0; top:0; padding:2px 8px; background:rgba(0,0,0,.75); color:#ffd23f; border:1px solid #ffd23f; border-radius:4px; font-size:12px; white-space:nowrap; }
+  .dp-label b { color:#fff; margin-right:4px; }
+  body.dp .bar, body.dp #flyHint, body.dp #title { display:none; }
+  body.dp #pip { width:min(34vw, 600px); top:12px; bottom:auto; }
+  body.dp #pip.big { width:min(60vw, 1000px); }
+  @media (max-width:700px) { body.dp #pip, body.dp #pip.big { width:calc(100% - 24px); } }
+  .cam-row2 { display:grid; grid-template-columns:auto 1fr auto 1fr; gap:4px 6px; align-items:center; }
+  .cam-row2 input, .cam-row2 select, .cam-pick input { width:100%; min-width:0; background:#2a2e38; color:var(--text); border:1px solid var(--line); border-radius:5px; padding:4px 6px; font:inherit; }
+  .cam-track { display:flex; flex-direction:column; gap:4px; padding:8px; margin:4px 0; border:1px solid var(--line); border-radius:6px; }
+  .cam-track .sec-sub { font-weight:600; }
+  .cam-track .sec-sub .k { font-weight:400; color:var(--dim); font-size:12px; margin-left:4px; }
+  .cam-track button.on { background:var(--accent); }
+  .cam-track button.play { background:#2f7d4f; min-width:76px; }
+  .cam-track select { width:auto; }
+  #focusLabels { position:fixed; inset:0; pointer-events:none; overflow:hidden; }
+  body.walking #focusLabels { display:none; }
+  .cam-row button.on { background:var(--accent); }
+  .cam-focus { margin-top:6px; padding:8px; border:1px solid #ffd23f66; border-radius:6px; display:flex; flex-direction:column; gap:3px; }
+  .cam-focus .sec-sub { display:flex; justify-content:space-between; align-items:center; font-weight:600; color:#ffd23f; }
+  .cam-focus .sec-sub button { background:#2a2e38; padding:3px 8px; font-weight:400; }
+  .cam-focus .fd { display:flex; gap:6px; align-items:baseline; font-size:12px; }
+  .cam-focus .fd i { width:8px; height:8px; border-radius:50%; flex:none; align-self:center; }
+  .cam-focus .fd b { white-space:nowrap; }
+  .cam-focus .fd span { color:var(--dim); min-width:0; }
+  .cam-pick { margin-top:6px; display:grid; grid-template-columns:auto 1fr; gap:6px; align-items:center; }
+  .cam-pick .cam-types { grid-column:1 / -1; margin-top:0; }
+  #showWrap { position:relative; }
+  #showMenu { position:absolute; bottom:calc(100% + 6px); right:0; display:flex; flex-direction:column; gap:2px; padding:4px; background:var(--panel); border:1px solid var(--line); border-radius:8px; backdrop-filter:blur(6px); }
+  #showMenu[hidden] { display:none; }
+  #showMenu button { text-align:left; }
+  body:not(.dp) #cams, body:not(.dp) #pip, body:not(.dp) #camHint { display:none; }
+  .cam-2 { display:grid; grid-template-columns:1fr 1fr; gap:4px 10px; }
+  .cam-2 > div { display:flex; flex-direction:column; gap:2px; min-width:0; }
+  .cam-edit label select { width:auto; margin-left:auto; padding:2px 4px; font-size:12px; }
+  .cam-edit label button { margin-left:auto; padding:1px 6px; font-size:12px; background:#2a2e38; }
+  .cam-edit label button + button { margin-left:0; }
+  body:not(.show) .show-only { display:none !important; }
+  body.show .bar, body.show #flyHint, body.show #cams, body.show #lifts, body.show #lights, body.show #info { display:none !important; }
+  body.show #side { max-height:calc(58vh - 70px); width:min(360px, 36vw); }
+  @media (max-width:700px) { body.show #side { width:auto; } }
+  #showBar { position:fixed; left:12px; right:12px; bottom:12px; height:max(250px, 40vh); display:flex; flex-direction:column; padding:6px 8px 8px; background:var(--panel); border:1px solid var(--line); border-radius:8px; backdrop-filter:blur(6px); }
+  .sb-row { display:flex; gap:6px; align-items:center; flex-wrap:wrap; margin-bottom:6px; }
+  .sb-row button { background:#2a2e38; }
+  .sb-row .k { color:var(--dim); font-size:12px; max-width:220px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .sb-row .sb-tip { max-width:none; }
+  @media (max-width:1100px) { .sb-row .sb-tip { display:none; } }
+  .sb-row .sp { flex:1; }
+  #shPlay { min-width:44px; background:#2f7d4f; }
+  #shPlay.on { background:#b8452f; }
+  #shTC { font:600 20px/1 ui-monospace,Menlo,Consolas,monospace; letter-spacing:1px; padding:0 6px; }
+  #shTracks { position:relative; flex:1; min-height:0; overflow:auto; border-radius:4px; background:#14161b; }
+  .tk-rulerrow { position:sticky; top:0; z-index:3; display:flex; background:#101216; border-bottom:1px solid var(--line); }
+  #shTL { display:block; flex:1; min-width:0; height:44px; cursor:pointer; touch-action:none; }
+  .tk-head { width:170px; flex:none; display:flex; align-items:center; gap:2px; padding:0 4px; border-right:1px solid var(--line); background:#181a20; position:sticky; left:0; z-index:2; }
+  .tk-corner { color:var(--dim); font-size:12px; padding-left:10px; }
+  .tk-row { display:flex; height:28px; border-bottom:1px solid #1f222a; }
+  .tk-group { background:#1a1d24; }
+  .tk-lane { position:relative; flex:1; min-width:0; overflow:hidden; cursor:pointer; }
+  .tk-name { display:flex; align-items:center; gap:6px; flex:1; min-width:0; padding:3px 6px; text-align:left; font-size:12px; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+  .tk-name i { width:10px; height:10px; border-radius:50%; flex:none; }
+  .tk-name .k { margin-left:auto; color:var(--dim); }
+  .tk-name.on { background:#33507f; }
+  .tk-name.off { opacity:.45; }
+  .tk-gname { font-weight:600; font-size:13px; }
+  .tk-indent { padding-left:26px; }
+  .tk-open { width:22px; padding:0; color:var(--dim); flex:none; }
+  .tk-sep { padding:4px 10px; color:var(--dim); font-size:12px; background:#101216; border-bottom:1px solid #1f222a; position:sticky; left:0; }
+  .tk-empty { padding:16px; color:var(--dim); }
+  .tk-clip { position:absolute; top:4px; bottom:4px; border-radius:4px; background:var(--c); color:#fff; font-size:11px; line-height:20px; padding:0 6px; overflow:hidden; white-space:nowrap; cursor:grab; box-shadow:inset 0 0 0 1px rgba(0,0,0,.35); }
+  .tk-clip span { text-shadow:0 1px 2px #000, 0 0 2px #000; pointer-events:none; }
+  .tk-clip.lt { color:#111; } .tk-clip.lt span { text-shadow:none; } .tk-tick.lt { color:var(--text); } .tk-tick.lt span { text-shadow:0 1px 2px #000; }
+  .tk-clip::before, .tk-clip::after { content:''; position:absolute; top:0; bottom:0; width:6px; cursor:ew-resize; }
+  .tk-clip::before { left:0; } .tk-clip::after { right:0; }
+  .tk-gclip { top:3px; bottom:3px; font-weight:600; }
+  .tk-tick { padding:0; overflow:visible; }
+  .tk-tick span { position:absolute; left:9px; }
+  .tk-clip.on { box-shadow:0 0 0 2px #fff, 0 0 0 3px #000; z-index:1; }
+  .tk-clip.fast { box-shadow:inset 0 0 0 2px #ff3b30; }
+  .tk-clip.on.fast { box-shadow:0 0 0 2px #fff, inset 0 0 0 2px #ff3b30; }
+  #shHead { position:absolute; top:0; width:2px; margin-left:-1px; background:#ff3b30; pointer-events:none; z-index:2; }
+  .sh-bg { display:flex; gap:4px; }
+  .sh-bg button { background:#2a2e38; padding:5px 8px; }
+  .sh-bg #bgLoad { flex:1; background:var(--accent); }
+  .sh-bg-w { display:flex; align-items:center; gap:6px; margin-top:8px; font-size:13px; }
+  .sh-bg-w input { width:70px; background:#2a2e38; color:var(--text); border:1px solid var(--line); border-radius:5px; padding:4px 6px; font:inherit; }
+  .sh-bg-tip { margin-top:6px; color:var(--dim); font-size:12px; line-height:1.5; }
+  .sh-marks { display:flex; flex-direction:column; gap:4px; }
+  .sh-mark { display:grid; grid-template-columns:auto 1fr auto; gap:4px; }
+  .sh-mark button { background:#2a2e38; padding:4px 8px; font:12px ui-monospace,Menlo,monospace; }
+  .sh-clipbox { border-color:#ffd23f66; }
+  body.show { -webkit-user-select:none; user-select:none; }
+  body.show input { -webkit-user-select:text; user-select:text; }
+  #shPlanTip { position:fixed; left:12px; top:12px; padding:5px 10px; background:var(--panel); border:1px solid var(--line); border-radius:6px; color:var(--dim); font-size:12px; pointer-events:none; }
+  #shHint { position:fixed; top:12px; left:50%; transform:translateX(-50%); padding:8px 14px; background:var(--accent); color:#fff; border-radius:8px; z-index:5; }
+  #shHint[hidden], #shBox[hidden] { display:none; }
+  #shBox { position:fixed; border:1px dashed #fff; background:rgba(76,141,255,.15); pointer-events:none; }
+  #people input, #cueSec input, .sh-mark input { width:100%; min-width:0; background:#2a2e38; color:var(--text); border:1px solid var(--line); border-radius:5px; padding:4px 6px; font:inherit; }
+  #people .cam-row { align-items:center; margin-bottom:6px; }
+  #people .cam-row input { width:52px; }
+  #people .cam-row #shGName { flex:1; width:auto; min-width:90px; }
+  .sh-seg button.on { background:var(--accent); }
+  .sh-sel { margin-top:8px; padding:8px; border:1px solid var(--line); border-radius:6px; display:flex; flex-direction:column; gap:8px; }
+  .sh-sel-head { font-weight:600; }
+  .sh-field { display:grid; grid-template-columns:32px 1fr; gap:6px; align-items:start; }
+  .sh-field > span { color:var(--dim); font-size:12px; line-height:26px; }
+  .sh-colors { display:grid; grid-template-columns:repeat(12, 1fr); gap:3px; }
+  .sh-colors button, .sh-custom { aspect-ratio:1; padding:0; border-radius:4px; border:2px solid transparent; min-width:0; }
+  .sh-colors button.on { border-color:#fff; box-shadow:0 0 0 1px #000 inset; }
+  .sh-custom { position:relative; display:grid; place-items:center; background:#2a2e38; color:var(--dim); font-size:12px; cursor:pointer; }
+  .sh-custom input { position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%; padding:0; border:0; }
+  .sh-acts { display:grid; grid-template-columns:repeat(2, 1fr); gap:4px; }
+  .sh-acts button { background:#2a2e38; padding:6px 4px; }
+  .sh-acts button.danger { color:#ff8a80; }
+  .sh-tip { font-size:11px; }
+  .sh-warn { color:#ff7b6b; font-size:12px; }
+  #toast { position:fixed; top:40%; left:50%; transform:translateX(-50%); padding:8px 14px; background:var(--panel); border:1px solid var(--line); border-radius:8px; display:none; }
+  @media (pointer:coarse) { body.walking #joy { display:block; } body.walking #walkHint { display:none; } }
+  @media (max-width:600px) { #joy, #walkBtns { bottom:180px; } #side { top:12px; width:auto; left:12px; max-height:45vh; } #info { top:auto; bottom:190px; } body.walking #side { display:none; } #title { display:none; } button { padding:7px 8px; } }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<div id="loading"><div>加载舞美模型…</div></div>
+
+<div id="flyHint">WASD 飞行 · E/Q 升降 · Shift 加速</div>
+<div id="title"><span id="name"></span> · <span id="dims">–</span></div>
+<div id="info"></div>
+<div id="walkHint">WASD 移动 · 拖动转向 · Shift 加速 · 空格 跳 · C 坐下/站起 · Esc 退出</div>
+<div id="joy"><div></div></div>
+<div id="walkBtns"><button id="jump">跳</button><button id="sit">坐下</button></div>
+<div id="side">
+  <section id="bgSec" class="panel show-only"><div class="sec-head">舞美图</div><div class="sec-body">
+    <div class="sh-bg"><button id="bgLoad">导入平面图</button><button id="bgRot" title="顺时针转 90°">⟳ 90°</button><button id="bgDel">去掉</button></div>
+    <label class="sh-bg-w" id="bgWRow">图片实际宽度 <input id="bgW" type="number" min="1" max="500" step="0.5"> 米</label>
+    <div class="k sh-bg-tip" id="bgTip"></div>
+    <input type="file" id="bgFile" accept="image/*" hidden>
+  </div></section>
+  <section id="people" class="panel show-only"><div class="sec-head">人员</div><div class="sec-body"></div></section>
+  <section id="cueSec" class="panel show-only"><div class="sec-head">标记</div><div class="sec-body"></div></section>
+  <section id="cams" class="panel"><div class="sec-head">机位</div><div class="sec-body"></div></section>
+  <section id="lifts" class="panel" hidden><div class="sec-head">升降屏</div><div class="sec-body"></div></section>
+  <section id="lights" class="panel" hidden><div class="sec-head">灯光</div><div class="sec-body">
+    <div class="lg-all"><button data-all="1">全开</button><button data-all="0">全关</button></div>
+    <div class="lg-all"><label class="k" for="level">亮度</label><input id="level" type="range" min="0" max="2" step="0.05" value="1"><button id="stars" class="on">星光</button></div>
+  </div></section>
+</div>
+<div id="toast"></div>
+<div id="showBar" class="show-only">
+  <div class="sb-row">
+    <button id="shMusic">♪ 导入音乐</button><span id="shMusicName" class="k"></span>
+    <button id="shPlay" class="play" title="空格">▶</button><b id="shTC">00:00:00</b>
+    <button id="shMark">＋ 标记</button>
+    <span class="k sb-tip">拖素材中间 = 平移 · 拖两头 = 改出发/到位 · Ctrl/⌘+滚轮 缩放时间</span>
+    <span class="sp"></span>
+    <button id="shFit">全图</button><button id="shOpen">打开</button><button id="shSave">保存</button><button id="shShots">导出截图</button>
+  </div>
+  <div id="shTracks">
+    <div class="tk-rulerrow"><div class="tk-head tk-corner">轨道</div><canvas id="shTL"></canvas></div>
+    <div class="tk-body"></div>
+    <div id="shHead"></div>
+  </div>
+  <input type="file" id="shMusicFile" accept="audio/*" hidden><input type="file" id="shOpenFile" accept=".json,application/json" hidden>
+</div>
+<div id="shPlanTip" class="show-only">左键：选人 · 拖人画路线 · 拖空白框选　右键拖：移动图　滚轮 / 双指捏合：缩放</div>
+<div id="shHint" hidden></div>
+<div id="shBox" hidden></div>
+<div id="camHint" hidden></div>
+<div id="dpLabels" hidden></div>
+<div id="dpBar" hidden>
+  <span class="dp-title">导摄模式</span>
+  <button data-dp="measure">测距</button><button data-dp="clear">清除测距</button><button data-dp="fit">全图</button>
+  <label for="dpCut">剖切</label><input id="dpCut" type="range" min="2" max="16" step="0.5" value="6"><span id="dpCutV">6m</span>
+  <button data-dp="exit">退出导摄</button>
+</div>
+<div id="pip" hidden><div class="safe act"></div><div class="safe title"></div><div class="cross"></div><div class="pip-label"></div></div>
+
+<div class="bar">
+  <div class="group" id="views">
+    <button data-view="front">正立面</button>
+    <button data-view="left">左侧 45°</button>
+    <button data-view="right">右侧 45°</button>
+    <button data-view="top">平面</button>
+  </div>
+  <div class="group">
+    <button id="walk">人物走动</button>
+    <button id="dpEnter">导摄模式</button>
+  </div>
+  <div class="group" id="showWrap">
+    <button id="showBtn">显示 ▴</button>
+    <div id="showMenu" hidden>
+      <button id="edges">白模+线</button>
+      <button id="screens" class="on" hidden>屏幕内容</button>
+      <button id="person" class="on">人物比例</button>
+      <button id="grid" class="on">网格</button>
+    </div>
+  </div>
+</div>
+
+<script>/*__STAGE__*/</script>
+<script>/*__APP__*/</script>
+</body>
+</html>
