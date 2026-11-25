@@ -1062,6 +1062,52 @@
     "notes": "12×30W RGBW；机身 1000 L×278 W×113 H mm"
   },
   {
+    "brand": "DTS",
+    "model": "PROFILO LED 200 (WH / CT / FC)",
+    "nameZh": "LED 成像灯(切割灯)",
+    "category": "spot-profile",
+    "renderType": "wash",
+    "beamAngleMin": 15.5,
+    "beamAngleMax": 41,
+    "lensDiameterMm": 150,
+    "emitW_mm": null,
+    "emitH_mm": null,
+    "weightKg": 16.8,
+    "keywords": [
+      "PROFILO LED 200",
+      "PROFILO LED",
+      "Profilo 200",
+      "DTS"
+    ],
+    "source": "https://dts-lighting.it/product/entertainment/profilo-led-200-ct/",
+    "sourceType": "manufacturer",
+    "role": "剧场/电视主光、切割、图案",
+    "notes": "200W 单颗 LED；WH、CT 线性变焦 15.5–38°，FC（RGBW）19–41°（https://dts-lighting.it/product/entertainment/profilo-led-200-fc/），官网未注明是光束角还是场角；4 片切割刀片 ±35°，图案像 Ø60 mm；CT 16.8 kg，FC 16.9 kg。官网未写前镜直径，150 mm 是按官网技术图纸（宽 248 mm）比例量出的估算值；图纸宽 248、高 338（含吊架，连吊环 370.5）mm"
+  },
+  {
+    "brand": "DTS",
+    "model": "SCENA LED 200 (WH / CT / FC)",
+    "nameZh": "LED 螺纹聚光灯(Fresnel/PC)",
+    "category": "fresnel",
+    "renderType": "wash",
+    "beamAngleMin": 6.4,
+    "beamAngleMax": 70,
+    "lensDiameterMm": 150,
+    "emitW_mm": null,
+    "emitH_mm": null,
+    "weightKg": 9.4,
+    "keywords": [
+      "SCENA LED 200",
+      "SCENA LED",
+      "Scena 200",
+      "DTS"
+    ],
+    "source": "https://dts-lighting.it/product/entertainment/scena-led-200-ct/",
+    "sourceType": "manufacturer",
+    "role": "剧场/电视柔光、面光",
+    "notes": "Ø150 mm 螺纹(Fresnel)镜或防眩光 PC 镜；WH、CT 线性变焦：Fresnel 6.5–70°，PC 6.4–64°；FC（RGBW）14–60°（https://dts-lighting.it/product/entertainment/scena-led-200-fc/）；官网未注明是光束角还是场角；200W；CT Fresnel 8.6 kg、PC 9.5 kg，FC 9.4 kg；技术图纸宽 237、机身高 223 mm"
+  },
+  {
     "brand": "TERBLY (浩洋)",
     "model": "PT189B",
     "nameZh": "189W 光束灯(5R)",
