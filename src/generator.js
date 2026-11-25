@@ -55,10 +55,12 @@ addWords({
   '选择模型': 'Choose your model', '把模型文件拖到这里': 'Drop your model file here', '或点击选择文件': 'or click to choose a file',
   '只在本机读取，不会上传': 'Read locally, never uploaded',
   '确认灯具和桌椅': 'Confirm lights and furniture',
-  '自动找出模型里重复出现的灯具和桌椅，换成简单形状（灯口发光、光束、简单桌椅），文件会小很多。':
-    'Repeated lights and furniture are found automatically and replaced by simple shapes (glowing lens, beam, simple furniture), which makes the file much smaller.',
-  '「已认出」的不用管；没认出的选一个用途。拿不准就选「不处理」，会按模型原样显示，只是文件大一些。':
-    '“Recognised” ones need nothing from you; choose a role for the rest. Not sure? “Leave as is” keeps it exactly as modelled — the file is just larger.',
+  '网页会找出模型里重复出现的东西（同一款灯、同一款椅子），由你告诉它每种是什么。选了用途的会换成简单形状（灯口发光、光束、简单桌椅），文件会小很多。': 'Repeated objects in your model (the same light, the same chair) are found automatically; you tell it what each one is. Anything you give a role becomes a simple shape (glowing lens, beam, simple furniture), which makes the file much smaller.',
+  '已认出': 'Recognised', '自己选用途': 'You pick the role', '不处理': 'Leave as is',
+  '：型号库里有的，参数准确，不用管。目前库还很小，只有 3d66 模型库的 4 款灯和 3 款桌椅，所以多数型号要你自己选。': ': it is in our library, so the settings are exact — nothing to do. The library is still small (4 lights and 3 furniture models from the 3d66 model library), so most types need you to pick.',
+  '：灯口放在灯具中心、用默认大小，光束方向自动定（地上的灯朝上，天上的灯朝观众席），位置是近似的。': ': the lens sits at the fixture centre with a default size, and the beam is aimed automatically (floor lights point up, overhead lights face the audience), so the position is approximate.',
+  '：不是灯具桌椅、或者拿不准的选这个。按模型原样显示，但不发光、没有灯光开关，文件也大一些。': ': for anything that is not a light or furniture, or when unsure. It is shown as modelled, but does not glow, has no light switch, and keeps the file larger.',
+  '想让你常用的灯被自动认出？把一台灯的模型发给撒库拉（联系方式在页面最下面），我们加进库里。': 'Want your usual fixtures recognised automatically? Send one fixture model to us (contact at the bottom of the page) and we will add it to the library.',
   '基本设置': 'Settings', '项目名称': 'Project name', '导出的网页文件名和网页标题都用这个名字': 'Used for the file name and the page title',
   '比如：2027 春季发布会': 'e.g. Spring Launch 2027',
   '观众席在舞台的哪一侧': 'Which side is the audience on?',

@@ -27,12 +27,22 @@ Only **FBX** and **GLB** are supported. Export .max, .obj, .c4d or .skp to FBX f
 
 ## 3. Lights and furniture
 
-The page finds repeated lights and furniture automatically and replaces them with simple shapes (glowing lens, beam, simple furniture), which makes the file much smaller. To help it:
+The page finds **repeated objects** in your model (the same light, the same chair) and you tell it what each one is. Anything you give a role becomes a simple shape (glowing lens, beam, simple furniture), which makes the file much smaller and gives the page a lights panel with a switch per group.
 
-1. **One group per fixture**, and copy the same model for every fixture of the same type (fixtures from model libraries usually already are).
+**Model it like this so they are found reliably:**
+
+1. **One group per fixture**, and copy the same model for every fixture of the same type (fixtures from model libraries usually already are). Fixtures modelled separately instead of copied show up as different types.
 2. **Group the lights by purpose**, e.g. “Top beams”, “Stage sides”, “Back wall”. **The outermost group name becomes the light switch name** on the page.
-3. The generator lists every type it found. Known types are filled in for you; for the others pick “Beam / Wash / Strobe / LED bar / Chair / Stool / Table”, or “Leave as is” if it is not a light or furniture.
-4. **“Recognised” types are the most accurate.** For a new type you assign yourself, the lens sits at the fixture centre with a default size, so it may be slightly off. Not sure? “Leave as is” keeps it exactly as modelled — the file is just larger.
+
+**In step 2 of the generator, each type gets one of three outcomes:**
+
+| Case | Result |
+|---|---|
+| **Recognised** (filled in for you) | The fixture is in our library, so lens position, direction and size are exact — nothing to do |
+| **You pick a role**: Beam / Wash / Strobe / LED bar / Chair / Stool / Table | The lens sits at the fixture centre with a default size; the beam is aimed automatically (floor lights point up, overhead lights face the audience), so the position is approximate |
+| **Leave as is** | Shown exactly as modelled, but it does not glow, has no light switch and keeps the file larger. Use it for anything that is not a light or furniture, or when unsure |
+
+**The library is still small**: it knows 4 lights from the 3d66 model library (one beam, one wash, one strobe, one LED bar) and 3 furniture models, so most types need you to pick. **Want your usual fixtures recognised automatically? Send one fixture model to us** (contact at the bottom of the page); we work out its lens and add it to the library, so everyone gets it recognised from then on.
 
 A model with hundreds of fixtures can be over 1 GB — that is fine; after simplifying it is usually a few dozen MB.
 
