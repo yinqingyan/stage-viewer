@@ -1,4 +1,4 @@
-// 设计师用的生成器：选模型 → 确认灯具桌椅 → 基本设置 → 生成单文件 html 并下载。
+// 设计师用的生成器：选模型 → 看一眼认出的灯具桌椅 → 生成单文件 html 并下载（项目名、观众席都有默认值）。
 // 全部在浏览器里完成，模型不离开设计师的电脑。
 // VIEWER（查看器模板，含注入标记）由 build.mjs 在本脚本之前定义。
 // 中英两种界面：页面上固定的文字查 GEN_WORDS，代码里拼的句子用 L(中文, English)；切换语言时重画这些部分。
@@ -34,13 +34,13 @@ setLang(new URLSearchParams(location.search).get('lang') || saved || (navigator.
 addWords({
   // 顶栏、头图
   '舞美三维网页生成器': 'Stage Viewer Generator', '模型准备说明': 'Model guide', '关闭': 'Close',
-  '把 3ds Max 导出的舞美模型变成一个 html 文件。双击就能在电脑、手机上三维浏览，走进观众席看舞台，发微信、邮件即可分享。':
-    'Turn your 3ds Max stage model into a single html file. Double-click to explore it in 3D on a computer or phone, walk into the audience and look at the stage, and share it by email or chat.',
+  '把 3ds Max、C4D、SketchUp、Blender 等软件做的舞美模型变成一个 html 文件。双击就能在电脑、手机上三维浏览，走进观众席看舞台，发微信、邮件即可分享。':
+    'Turn a stage model from 3ds Max, C4D, SketchUp, Blender or similar into a single html file. Double-click to explore it in 3D on a computer or phone, walk into the audience and look at the stage, and share it by email or chat.',
   '模型只在你的电脑上处理，不会上传到任何地方': 'Your model is processed on your own computer and never uploaded',
   '全程在浏览器里完成，免费开源': 'Everything runs in your browser — free and open source',
   '第一次用？先看导出要求': 'First time? Read the export checklist',
   // 导出前
-  '导出模型前，在 3ds Max 里做对 4 件事': 'Four things to get right in 3ds Max before you export',
+  '导出模型前，做对这 4 件事': 'Four things to get right before you export',
   '做对了，生成的网页才有画面、认得出灯、会动。': 'Get these right and your stage shows its screens, recognises its lights and moves.',
   '勾选「嵌入的媒体」': 'Tick “Embed Media”', '屏幕画面和贴图才会显示，不然是白模。': 'Otherwise screen content and textures are missing and you get a plain white model.',
   '格式选「二进制」，单位厘米或米': 'Choose “Binary”, units in centimeters or meters',
@@ -52,24 +52,28 @@ addWords({
     'Frame 0 at the start, the last frame at the end of travel; tick “Animation” and “Bake Animation” when exporting. The page gets a machinery panel with a slider per part.',
   '看 30 秒动画': 'Watch the 30-second animation', '完整的模型准备说明 →': 'Full model preparation guide →',
   '30 秒动画，讲的就是上面 4 件事': 'The 30-second animation covers the same 4 points',
-  // 四步
-  '四步，做出你的三维舞台': 'Four steps to your 3D stage',
+  // 三步
+  '三步，做出你的三维舞台': 'Three steps to your 3D stage',
   '选择模型': 'Choose your model', '把模型文件拖到这里': 'Drop your model file here', '或点击选择文件': 'or click to choose a file',
   '只在本机读取，不会上传': 'Read locally, never uploaded',
-  '确认灯具和桌椅': 'Confirm lights and furniture',
-  '网页会找出模型里重复出现的东西（同一款灯、同一款椅子），由你告诉它每种是什么。选了用途的会换成简单形状（灯口发光、光束、简单桌椅），文件会小很多。': 'Repeated objects in your model (the same light, the same chair) are found automatically; you tell it what each one is. Anything you give a role becomes a simple shape (glowing lens, beam, simple furniture), which makes the file much smaller.',
+  '看一眼认出的东西': 'Check what was found',
+  '模型里重复出现的灯、椅子、音箱都列在下面，用途已经尽量帮你填好。猜的看一眼对不对，没认出的选一下；拿不准就留「不处理」，照原样显示也没问题。':
+    'Every repeated light, chair and speaker in the model is listed below with its role filled in as far as possible. Glance at the guesses, pick a role for anything not recognised; if unsure leave it as “Leave as is” and it is shown exactly as modelled.',
+  '选了用途会怎样？': 'What does a role do?',
   '已认出': 'Recognised', '自己选用途': 'You pick the role', '不处理': 'Leave as is',
-  '：灯口放在灯具中心、用默认大小，光束方向自动定（地上的灯朝上，天上的灯朝观众席），位置是近似的。': ': the lens sits at the fixture centre with a default size, and the beam is aimed automatically (floor lights point up, overhead lights face the audience), so the position is approximate.',
+  '：这种东西会换成简单形状（灯口发光、光束、简单桌椅），文件小很多。灯口放在灯具中心、用默认大小，光束方向自动定（地上的灯朝上，天上的灯朝观众席），位置是近似的。':
+    ': it is replaced by a simple shape (glowing lens, beam, simple furniture), which makes the file much smaller. The lens sits at the fixture centre with a default size, and the beam is aimed automatically (floor lights point up, overhead lights face the audience), so the position is approximate.',
   '：不是灯具桌椅、或者拿不准的选这个。按模型原样显示，但不发光、没有灯光开关，文件也大一些。': ': for anything that is not a light or furniture, or when unsure. It is shown as modelled, but does not glow, has no light switch, and keeps the file larger.',
-  '想让你常用的灯被自动认出？把一台灯的模型发给撒库拉（联系方式在页面最下面），我们加进库里。': 'Want your usual fixtures recognised automatically? Send one fixture model to us (contact at the bottom of the page) and we will add it to the library.',
-  '基本设置': 'Settings', '项目名称': 'Project name', '导出的网页文件名和网页标题都用这个名字': 'Used for the file name and the page title',
+  '想让你常用的灯被自动认出？': 'Want your usual fixtures recognised automatically? ',
+  '把一台灯的模型发给撒库拉（联系方式在页面最下面），我们加进库里。': 'Send one fixture model to us (contact at the bottom of the page) and we will add it to the library.',
+  '生成网页': 'Generate', '得到一个 html 文件，双击就能打开，发给导演和甲方。下面两项都已填好，不改也行。': 'You get one html file. Double-click to open it, then send it to the director or client. Both settings below are already filled in; change them only if you want to.',
+  '项目名称': 'Project name', '网页标题和文件名': 'Page title and file name',
   '比如：2027 春季发布会': 'e.g. Spring Launch 2027',
   '观众席在舞台的哪一侧': 'Which side is the audience on?',
-  '按 3ds Max 的视图选。不确定就用默认；打开后「观众席」视角要是看到舞台背面，换一侧重新生成。':
-    'Pick by 3ds Max viewport. If unsure keep the default; if the audience view shows the back of the stage, pick another side and generate again.',
+  '按建模软件里的前、后、左、右视图。打开后「观众席」视角要是看到舞台背面，换一侧重新生成。':
+    'As in your modelling software’s front / back / left / right views. If the audience view shows the back of the stage, pick another side and generate again.',
   '前': 'Front', '后': 'Back', '左': 'Left', '右': 'Right',
-  '前视图一侧（默认）': 'Front view side (default)', '后视图一侧': 'Back view side', '左视图一侧': 'Left view side', '右视图一侧': 'Right view side',
-  '生成网页': 'Generate', '得到一个 html 文件，双击就能打开，发给导演和甲方。': 'You get one html file. Double-click to open it, then send it to the director or client.',
+  '前视图一侧': 'Front view side', '后视图一侧': 'Back view side', '左视图一侧': 'Left view side', '右视图一侧': 'Right view side',
   '将导出：': 'Will save as:', '生成并下载': 'Generate and download',
   // 页脚
   '免费开源': 'Free and open source',
@@ -98,6 +102,18 @@ function applyLang(switched) {
   renderKinds();
   showName();
   if (switched || !explainer) mountVideo();
+}
+// 第 3 步的「能不能直接生成」：没认出的、猜的都在这里再说一遍，设计师不用回头翻第 2 步
+function renderReady() {
+  const box = $('ready');
+  if (!stage1 || stage1.state !== 'ready') { box.innerHTML = ''; return; }
+  const main = kinds.filter(k => !Object.keys(k.contains).length);
+  const ask = main.filter(k => stateOf(k) === 'ask' && !k.role), guessed = main.filter(k => k.guessed && !k.known);
+  const names = list => list.slice(0, 3).map(k => user(k.name)).join(L('、', ', ')) + (list.length > 3 ? L(` 等 ${list.length} 种`, ` and ${list.length - 3} more`) : '');
+  if (!fx || !main.length) { box.innerHTML = `<div class="msg ok">✓ ${L('可以生成了。', 'Ready to generate.')}</div>`; return; }
+  if (ask.length) box.innerHTML = `<div class="msg warn">${L(`还有 ${ask.length} 种没选用途：`, `${ask.length} type(s) still have no role: `)}<b>${names(ask)}</b>${L('。不选也能生成，它们会照原样显示。', '. You can generate anyway; they are shown as modelled.')}</div>`;
+  else if (guessed.length) box.innerHTML = `<div class="msg ok">✓ ${L(`可以生成了。有 ${guessed.length} 种是按名字猜的（`, `Ready to generate. ${guessed.length} type(s) were guessed from names (`)}<b>${names(guessed)}</b>${L('），猜错了回第 2 步改。', '); go back to step 2 if a guess is wrong.')}</div>`;
+  else box.innerHTML = `<div class="msg ok">✓ ${L('全部认出，可以生成了。', 'Everything recognised. Ready to generate.')}</div>`;
 }
 
 // ---------- 30 秒说明动画：收在「导出前」一节里，点「看 30 秒动画」才展开并播放；下面给对应语言的 MP4 下载 ----------
@@ -140,20 +156,23 @@ function renderInfo() {
   if (!stage1 || !file) { info.innerHTML = ''; return; }
   const name = `${user(file.name)}（${mb(file.size)}）`;
   const { state, readErr } = stage1;
-  if (state === 'badType') { info.innerHTML = `<div class="msg bad">${L('只支持 .fbx 和 .glb。其他格式（.max、.obj、.c4d、.skp）请先导出成 FBX。', 'Only .fbx and .glb are supported. Export other formats (.max, .obj, .c4d, .skp) to FBX first.')}</div>`; return; }
+  if (state === 'badType') { info.innerHTML = `<div class="msg bad">${L('支持 .fbx、.glb、.obj、.3ds、.dae。其他格式（.max、.c4d、.skp、.3dm）请先在建模软件里导出成 FBX 或 GLB。', 'Supported: .fbx, .glb, .obj, .3ds, .dae. Export other formats (.max, .c4d, .skp, .3dm) to FBX or GLB first.')}</div>`; return; }
   if (state === 'tooBig') { info.innerHTML = `<div class="msg bad">${L('文件太大，浏览器读不进来。请换用电脑上的 Chrome / Edge，或先在 3ds Max 里删掉用不到的部分。', 'The file is too large for the browser. Try Chrome or Edge on a computer, or remove unused parts in 3ds Max first.')}</div>`; return; }
   if (state === 'reading') { info.innerHTML = `<div class="msg">${name}${L('：正在读取…', ': reading…')}</div>`; return; }
   if (state === 'analyzing') { info.innerHTML = `<div class="msg">${name}${L('：正在分析灯具和桌椅…', ': looking for lights and furniture…')}</div>`; return; }
   let note = '';
   if (format === 'glb') note = `<div class="msg warn">${L('GLB 模型不做灯具识别，会原样生成。', 'GLB models are not scanned for lights; they are used as-is.')}</div>`;
+  // OBJ、3DS、DAE：贴图是单独的文件，拖进来的只有模型本身；也不记单位（查看器按舞台大小自动判断）
+  else if (format !== 'fbx') note = `<div class="msg warn">${L(`${format.toUpperCase()} 模型不做灯具识别，会原样生成。这种格式的贴图是单独的文件，带不进来，屏幕画面会是白的；要贴图请导出成 FBX（勾选嵌入贴图）或 GLB。`,
+    `${format.toUpperCase()} models are not scanned for lights and are used as-is. Their textures are separate files and are not included, so screens will be white; export FBX (with embedded textures) or GLB if you need them.`)}</div>`;
   else if (readErr !== undefined) note = `<div class="msg warn">${L(`这个 FBX 不是二进制格式，或者读不懂（${esc(readErr)}），不能识别灯具，会原样生成。3ds Max 导出时「文件格式」选「二进制」可以解决。`,
     `This FBX is not binary or could not be read (${esc(readErr)}), so lights cannot be detected and it is used as-is. Export with File format “Binary” in 3ds Max to fix this.`)}</div>`;
   // 贴图没嵌入：网页里会是白色，提醒重新导出（不拦着，可以先生成白模版）
   const missing = texInfo.filter(t => !t.embedded).map(t => t.file);
   const list = `${missing.slice(0, 6).map(user).join(L('、', ', '))}${missing.length > 6 ? L(' 等', ' …') : ''}`;
   const texNote = !texInfo.length || !missing.length ? '' : `<div class="msg warn"><b>${L(`⚠ 有 ${missing.length} 张贴图没有嵌入：`, `⚠ ${missing.length} texture(s) not embedded: `)}</b>${list}<br>
-     ${L('生成的网页里，用到这些贴图的地方会是白色或纯色（比如屏幕画面）。在 3ds Max 导出 FBX 时勾选「嵌入的媒体」后重新导出就好；也可以先继续生成看看。',
-        'Anything using them (screen content, for example) will show white or a flat colour. Re-export from 3ds Max with “Embed Media” ticked — or carry on and generate anyway.')}</div>`;
+     ${L('生成的网页里，用到这些贴图的地方会是白色或纯色（比如屏幕画面）。导出 FBX 时勾选嵌入贴图（3ds Max 里叫「嵌入的媒体」）后重新导出就好；也可以先继续生成看看。',
+        'Anything using them (screen content, for example) will show white or a flat colour. Re-export the FBX with embedded textures (“Embed Media” in 3ds Max) — or carry on and generate anyway.')}</div>`;
   const texOk = texInfo.length && !missing.length ? L(` · ${texInfo.length} 张贴图已全部嵌入`, ` · all ${texInfo.length} texture(s) embedded`) : '';
   // 模型大：先靠第 2 步精简灯具桌椅，还大就看说明第六节（网页大小约等于精简后的 FBX）
   const big = file.size > 100 * 1024 * 1024 ? `<div class="msg warn">${L(`模型有 ${mb(file.size)}，生成的网页会比较大，手机可能打不开。先在第 2 步给灯具桌椅选好用途，通常能小很多；还嫌大，看「模型准备说明」第六节「模型太大怎么办」。`,
@@ -164,9 +183,11 @@ function renderInfo() {
 async function load(f) {
   file = f;
   format = f.name.toLowerCase().split('.').pop();
-  [2, 3, 4].forEach(n => stepState(n, 'off'));
-  $('result').innerHTML = $('progress').textContent = '';
-  if (!['fbx', 'glb'].includes(format)) { stage1 = { state: 'badType' }; renderInfo(); return; }
+  [2, 3].forEach(n => stepState(n, 'off'));
+  $('result').innerHTML = $('progress').textContent = $('ready').innerHTML = '';
+  $('kinds').classList.remove('adv');
+  delete $('kinds').dataset.knownOpen;
+  if (!['fbx', 'glb', 'obj', '3ds', 'dae'].includes(format)) { stage1 = { state: 'badType' }; renderInfo(); return; }
   stage1 = { state: 'reading' };
   renderInfo();
   await tick();
@@ -207,14 +228,14 @@ async function load(f) {
   renderInfo();
   if (!$('title').value) $('title').value = f.name.replace(/\.[^.]+$/, '');
   showName();
-  renderKinds();
   stepState(1, 'done');
-  [2, 3, 4].forEach(n => stepState(n, 'on'));
+  stepState(3, 'on');
+  renderKinds();  // 第 2 步没什么要看的（全认出、没找到、GLB）就直接标成完成
   // 拖放区在首屏，载入后带着往下走到第 2 步
   setTimeout(() => $('s2').scrollIntoView({ behavior: 'smooth', block: 'start' }), 300);
 }
 
-// ---------- 2. 确认灯具和桌椅 ----------
+// ---------- 2. 看一眼认出的东西 ----------
 function roleSelect(k) {
   const opts = ROLES().map(([v, l]) => Array.isArray(l)
     ? `<optgroup label="${v}">${l.map(([v2, l2]) => `<option value="${v2}"${k.role === v2 ? ' selected' : ''}>${l2}</option>`).join('')}</optgroup>`
@@ -232,50 +253,76 @@ function modelSelect(k) {
     `<option value="${f.i}"${k.model === f.i ? ' selected' : ''}>${esc(f.model)}</option>`).join('')}</optgroup>`).join('');
   return `<select data-m="${k.id}" class="model ${k.model != null ? 'set' : ''}" translate="no"><option value="">${L('通用（默认大小）', 'Generic (default size)')}</option>${opts}</select>`;
 }
+// 每种东西载入时归一类：ask 没认出（要你选）、guess 按名字猜的（看一眼）、known 已认出（不用管）。
+// 归类定了就不变：设计师改用途时行不会跳来跳去
+const stateOf = k => k.st ||= k.known ? 'known' : k.guessed ? 'guess' : 'ask';
 function row(k) {
   const groups = Object.entries(k.groups).sort((a, b) => b[1] - a[1]);
   const where = groups.slice(0, 3).map(([g, n]) => `${user(g)} ×${n}`).join(L('、', ', '));
   const more = groups.length > 3 ? L(` 等 ${groups.length} 个组`, ` and ${groups.length - 3} more`) : '';
-  const what = Object.keys(k.contains).length
-    ? `<div class="k">${L('一个整体，里面有 ', 'A whole unit containing ')}${Object.entries(k.contains).map(([c, n]) => `${n} × ${user(kinds.find(x => x.id === c)?.name || c)}`).join(L('、', ', '))}</div>`
-    : `<div class="k">${L(`每个 ${k.parts} 个部件`, `${k.parts} parts each`)}</div>`;
-  return `<tr><td><b translate="no">${esc(k.name)}</b>${k.known ? `<span class="tag">${L('已认出', 'Recognised')}</span>` : ''}${k.guessed && !k.known ? `<span class="tag guess">${L('按名字猜：', 'Guessed from name: ')}<span translate="no">${esc(k.guessed)}</span></span>` : ''}${what}</td>
-    <td class="num">${k.count}${L(' 个', '')}</td><td class="where"><span class="k">${where}${more}</span></td><td class="role">${roleSelect(k)}</td></tr>`;
+  const unit = Object.keys(k.contains).length;
+  const what = unit ? `<div class="k">${L('里面有 ', 'Contains ')}${Object.entries(k.contains).map(([c, n]) => `${n} × ${user(kinds.find(x => x.id === c)?.name || c)}`).join(L('、', ', '))}</div>` : '';
+  const tag = k.known ? `<span class="tag">${L('已认出', 'Recognised')}</span>`
+    : k.guessed ? `<span class="tag guess">${L('按名字猜：', 'Guessed from name: ')}<span translate="no">${esc(k.guessed)}</span></span>` : '';
+  return `<tr data-k="${k.id}" data-state="${stateOf(k)}"><td><b translate="no">${esc(k.name)}</b>${tag}${what}</td>
+    <td class="where"><span class="n">${k.count}${L(' 个', '')}</span> · ${where}${more}</td><td class="role">${roleSelect(k)}</td></tr>`;
 }
 function renderKinds() {
   const box = $('kinds');
   if (!stage1 || stage1.state !== 'ready') { box.innerHTML = ''; return; }
-  if (!fx) { box.innerHTML = `<div class="msg">${L('跳过这一步。', 'Nothing to do here.')}</div>`; return; }
-  if (!kinds.length) { box.innerHTML = `<div class="msg">${L('没有找到重复出现的灯具或桌椅，模型会原样显示。', 'No repeated lights or furniture found; the model is used as-is.')}</div>`; return; }
-  // 「整体」（一整排灯架、一套桌椅）一般不用管，收起来
-  const main = kinds.filter(k => !Object.keys(k.contains).length), groups = kinds.filter(k => Object.keys(k.contains).length);
-  const head = `<thead><tr><th>${L('型号', 'Type')}</th><th>${L('数量', 'Count')}</th><th>${L('在哪些组里', 'In groups')}</th><th style="width:220px">${L('用途', 'Role')}</th></tr></thead>`;
-  const known = kinds.filter(k => k.known).length, guessed = main.filter(k => k.guessed && !k.known).length, left = main.length - known - guessed;
-  box.innerHTML = `<div class="msg ${!left ? 'ok' : ''}">${L(`找到 ${main.length} 种：已自动认出 ${known} 种${guessed ? `，按名字猜了 ${guessed} 种（请看一眼对不对）` : ''}${left > 0 ? `，其余 ${left} 种请选一下用途` : ''}。`,
-      `Found ${main.length} type(s): ${known} recognised${guessed ? `, ${guessed} guessed from names (please check)` : ''}${left > 0 ? `, ${left} left for you to choose` : ''}.`)}</div>
-    <table class="kinds">${head}<tbody>${main.map(row).join('')}</tbody></table>
-    ${groups.length ? `<details><summary>${L(`另有 ${groups.length} 种「整体」（灯架、成套桌椅等，一般不用管）`, `${groups.length} more “whole units” (rigs, table sets — usually leave these alone)`)}</summary>
-      <table class="kinds">${head}<tbody>${groups.map(row).join('')}</tbody></table></details>` : ''}`;
+  const main = kinds.filter(k => !Object.keys(k.contains).length), units = kinds.filter(k => Object.keys(k.contains).length);
+  // 没什么可看的：一句话，第 2 步直接算完成
+  const skip = !fx ? L('这个模型不做灯具识别，直接到第 3 步生成。', 'This model is not scanned for lights; go straight to step 3.')
+    : !main.length ? L('没有找到重复出现的灯具或桌椅，模型会原样显示。直接到第 3 步生成。', 'No repeated lights or furniture found; the model is used as-is. Go straight to step 3.') : '';
+  if (skip) { box.innerHTML = `<div class="msg ok">✓ ${skip}</div>`; box.classList.remove('adv'); stepState(2, 'done'); renderReady(); return; }
+  const ask = main.filter(k => stateOf(k) === 'ask'), guess = main.filter(k => stateOf(k) === 'guess'), known = main.filter(k => stateOf(k) === 'known');
+  const left = ask.filter(k => !k.role);  // 没认出、设计师也还没选的
+  const n = list => list.reduce((s, k) => s + k.count, 0);
+  const sec = (cls, title, list, closed) => list.length ? `<tbody class="${cls}${closed ? ' closed' : ''}"><tr class="sec"><th colspan="3"><i></i>${title}<span>${L(`${list.length} 种，共 ${n(list)} 个`, `${list.length} type(s), ${n(list)} in total`)}</span></th></tr>${list.map(row).join('')}</tbody>` : '';
+  const summary = !ask.length && !guess.length ? L('全部认出，不用管。', 'Everything recognised — nothing to do.')
+    : L(`找到 ${main.length} 种${known.length ? `，已认出 ${known.length} 种` : ''}${guess.length ? `，按名字猜了 ${guess.length} 种` : ''}${ask.length ? `，${ask.length} 种没认出${left.length < ask.length ? `（已选 ${ask.length - left.length} 种）` : ''}` : ''}。`,
+        `Found ${main.length} type(s)${known.length ? `, ${known.length} recognised` : ''}${guess.length ? `, ${guess.length} guessed from names` : ''}${ask.length ? `, ${ask.length} not recognised${left.length < ask.length ? ` (${ask.length - left.length} chosen)` : ''}` : ''}.`);
+  const adv = box.classList.contains('adv');
+  box.innerHTML = `<div class="msg ${left.length ? 'warn' : 'ok'}">${left.length ? '' : '✓ '}${summary}</div>
+    <table class="kinds">
+      ${sec('ask', L('没认出，请选用途', 'Not recognised — choose a role'), ask)}
+      ${sec('guess', L('按名字猜的，看一眼对不对', 'Guessed from names — check them'), guess)}
+      ${sec('known', L('已认出，不用管', 'Recognised — nothing to do'), known, !box.dataset.knownOpen)}
+    </table>
+    <details class="adv-toggle"${adv ? ' open' : ''}><summary>${L('高级：指定灯具型号、整体（灯架、成套桌椅）', 'Advanced: exact fixture models, whole units (rigs, table sets)')}</summary>
+      <div class="units">
+        ${main.some(k => !k.known && LIGHT_ROLES.includes(k.role)) ? `<p class="hint">${L('上面每种没认出的灯，用途下面多了一个型号框；选了具体型号，灯口大小和光束角就按真实规格画。', 'Each unrecognised light above now has a model box under its role; pick the exact model and the lens size and beam angle follow its real spec.')}</p>` : ''}
+        ${units.length ? `<h4>${L(`整体 ${units.length} 种`, `${units.length} whole unit(s)`)}</h4><p class="hint">${L('一整排灯架、一套桌椅这类，一般留「不处理」。', 'Whole rigs or table sets — usually leave these alone.')}</p>
+          <table class="kinds"><tbody>${units.map(row).join('')}</tbody></table>` : `<p class="hint">${L('这个模型里没有「整体」。', 'No whole units in this model.')}</p>`}
+      </div></details>`;
+  stepState(2, left.length || guess.length ? 'on' : 'done');
+  box.querySelector('.adv-toggle').ontoggle = e => box.classList.toggle('adv', e.target.open);
+  box.querySelector('tbody.known tr.sec')?.addEventListener('click', () => {
+    const tb = box.querySelector('tbody.known');
+    tb.classList.toggle('closed');
+    box.dataset.knownOpen = tb.classList.contains('closed') ? '' : '1';
+  });
   box.querySelectorAll('select[data-k]').forEach(s => s.onchange = () => {
     const k = kinds.find(k => k.id === s.dataset.k);
     k.role = s.value;
     if (k.model != null && FIXTURES[k.model].role !== k.role) k.model = null;  // 换了用途，型号作废
     k.guessed = null;
-    renderKinds();  // 型号下拉框跟着用途变
+    renderKinds();  // 型号下拉框跟着用途变，行也会换到对应那一段
   });
   box.querySelectorAll('select[data-m]').forEach(s => s.onchange = () => {
     kinds.find(k => k.id === s.dataset.m).model = s.value === '' ? null : +s.value;
     s.classList.toggle('set', s.value !== '');
   });
+  renderReady();
 }
 
-// ---------- 3. 基本设置 ----------
+// ---------- 3. 生成：项目名称（默认文件名）、观众席 ----------
 const projectName = () => $('title').value.trim() || (file ? file.name.replace(/\.[^.]+$/, '') : '');
 const fileName = () => projectName().replace(/[\\/:*?"<>|]/g, '_') + '.html';
 const showName = () => $('outName').textContent = projectName() ? fileName() : '—';
 $('title').oninput = showName;
 
-// ---------- 4. 生成 ----------
+// ---------- 生成并下载 ----------
 function toBase64(blob) {
   return new Promise((ok, fail) => {
     const r = new FileReader();
@@ -331,7 +378,7 @@ $('go').onclick = async () => {
       : L(`${n.id}（${esc(n.name)}）不在已知型号里，先按默认大小显示`, `${n.id} (${esc(n.name)}) is not a known type; shown at a default size for now`);
     if (notes.length) $('result').insertAdjacentHTML('beforeend', `<div class="msg warn" translate="no">${notes.map(noteText).join('<br>')}</div>`);
     a.click();
-    stepState(4, 'done');
+    stepState(3, 'done');
   } catch (e) {
     await say('');
     $('result').innerHTML = `<div class="msg bad with-face">${face('boom')}<span>${L('生成失败：', 'Generation failed: ')}${esc(e.message)}<br>${L(`请把这段提示和模型大小发到 ${MAIL}，我们来看。`, `Please send this message and your model size to ${MAIL} and we will take a look.`)}</span></div>`;

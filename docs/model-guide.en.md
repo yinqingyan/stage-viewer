@@ -17,7 +17,18 @@ In 3ds Max: **File → Export → Export**, choose **FBX**, then in the export s
 | Units | Centimeters or meters | The model is the wrong size (people look like ants or giants) |
 | File format | **Binary**, FBX 2014 or newer | ASCII files display, but lights cannot be detected or simplified |
 
-Only **FBX** and **GLB** are supported. Export .max, .obj, .c4d or .skp to FBX first.
+Supported: **FBX, GLB, OBJ, 3DS, DAE**. **FBX or GLB is recommended**: only these two pack the textures into one file, and automatic fixture detection works with FBX only. Export .max, .c4d, .skp or .3dm to one of these first.
+
+**Exporting from other programs:**
+
+| Program | Export | Notes |
+|---|---|---|
+| 3ds Max | File → Export → FBX | Tick Embed Media, choose Binary |
+| Maya | File → Export All → FBX | Tick Embed Media |
+| Cinema 4D | File → Export → FBX | Tick embed textures |
+| Blender | File → Export → glTF 2.0 (choose .glb) | GLB carries its textures — the easiest |
+| SketchUp, Rhino, Vectorworks | Export FBX (or OBJ if FBX isn't available) | Textures may be separate files and show white on the page; use meters or centimeters |
+
 
 ## 2. Materials and screens
 
@@ -104,5 +115,5 @@ Bugs or feature requests? Contact: **stageviewer.app@outlook.com**
 - **Screens are white**: “Embed Media” was off — export again with it on.
 - **People are the wrong size**: wrong export units — use centimeters or meters.
 - **Machinery does not move**: “Animation” was off, or the keyframes are on a part inside the group instead of the group itself.
-- **A fixture was not recognised**: choose its role in the confirm step. If copies of the same fixture were modelled separately (not copied), they may show up as different types — choose a role for each.
+- **A fixture was not recognised**: choose its role in step 2 of the generator (“Check what was found”). If copies of the same fixture were modelled separately (not copied), they may show up as different types — choose a role for each.
 - **Browsers**: Chrome, Edge or Firefox from the last two years; Safari 16.4+ (iOS 16.4+ on iPhone).
