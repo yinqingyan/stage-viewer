@@ -19,6 +19,7 @@ let file = null, bytes = null, format = '', fx = null, graph = null, kinds = [],
 
 // ---------- 说明 ----------
 $('openGuide').onclick = () => $('guide').showModal();
+document.querySelectorAll('[data-guide]').forEach(b => b.onclick = () => $('guide').showModal());
 $('closeGuide').onclick = () => $('guide').close();
 $('guide').onclick = e => e.target === $('guide') && $('guide').close();
 
