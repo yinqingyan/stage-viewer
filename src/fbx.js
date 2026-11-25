@@ -5,6 +5,7 @@
 const td = new TextDecoder(), te = new TextEncoder();
 export const LIGHTS = ['beam', 'wash', 'strobe', 'bar'];
 export const PROPS = ['chair', 'stool', 'table'];
+export const SPEAKERS = ['speaker', 'sub'];  // 音响：线阵音箱、超低音箱。原样保留形状（挡不挡视线要看真实大小），只在网页里能按组开关
 
 export class Fbx {
   constructor(buf) {
@@ -232,14 +233,14 @@ export function makeConfig(kinds, { objs, parent }, lib) {
   const same = (a, b) => a.size === b.size && [...a].every(x => b.has(x));
   const esc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-  const fixtures = [], props = [], notes = [];
+  const fixtures = [], props = [], speakers = [], notes = [];
   for (const k of kinds) {
     const role = k.role;
     if (!role) continue;
-    const light = LIGHTS.includes(role);
-    let known = libraryEntry(k, lib);
+    const light = LIGHTS.includes(role), speaker = SPEAKERS.includes(role);
+    let known = speaker ? null : libraryEntry(k, lib);
     if (known && roleOf(known) !== role) known = null;
-    const e = { ...known }, parts = light ? null : k.leaves, ids = new Set(k.ids);
+    const e = { ...known }, parts = light ? null : k.leaves, ids = new Set(k.ids);  // 桌椅、音响再按部件数过滤
     let regex = known ? known.match : '^' + esc(sane(k.name));
     if (!same(select(regex, parts), ids)) {
       regex = '^(' + [...new Set(k.ids.map(m => esc(sane(objs.get(m).name))))].sort().join('|') + ')$';
@@ -247,11 +248,12 @@ export function makeConfig(kinds, { objs, parent }, lib) {
     }
     e.match = regex;
     Object.assign(e, k.extra);  // 生成器里选了具体灯具型号：sizeM、angle
+    if (speaker) { speakers.push({ match: e.match, kind: role, parts }); continue; }
     if (light) { e.type = role; fixtures.push(e); }
     else { e.shape = role; e.parts = parts; props.push(e); }
     if (!known) notes.push({ type: 'unknown', id: k.id, name: k.name });  // 不在已知型号里，先按默认大小显示
   }
-  return { fixtures, props, notes };
+  return { fixtures, props, speakers, notes };
 }
 
 // 去掉 units 里每个组的几何体：网格节点改成 Null（保留位置朝向），删掉 Geometry 及其连接。

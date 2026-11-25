@@ -86,6 +86,7 @@ const PATTERNS = [
   [/^模型加载失败：(.*)$/, e => `Failed to load the model: ${e}`],
   [/^附近 (\S+) 米内没有座位$/, r => `No seat within ${r} m`],
   [/^(\d+) 台 (.+)$/, (n, types) => `${n} × ${one(types)}`],
+  [/^(\d+) 只 (.+)$/, (n, types) => `${n} × ${one(types)}`],
   [/^点击(平面图|地面或台面)放置「(.*)」$/, (w, what) => `Click the ${w === '平面图' ? 'plan' : 'floor or deck'} to place “${one(what)}”`],
   [/^点击新位置移动 (.*)$/, c => `Click a new spot to move ${c}`],
   [/^点击要拍的位置，(.*) 对准那里$/, c => `Click what to shoot — ${c} will aim there`],
@@ -116,6 +117,8 @@ const EN = {
   // 灯光
   '灯光': 'Lights', '全开': 'All on', '全关': 'All off', '亮度': 'Brightness', '星光': 'Star filter', '光束': 'Beam',
   '光束灯': 'Beam', '染色灯': 'Wash', '频闪': 'Strobe', '灯条': 'LED bar',
+  // 音响
+  '音响': 'Speakers', '全部显示': 'Show all', '全部隐藏': 'Hide all', '线阵音箱': 'line array', '超低音箱': 'subwoofer',
   // 导摄
   '测距': 'Measure', '清除测距': 'Clear', '全图': 'Fit', '剖切': 'Section', '退出导摄': 'Exit',
   '水平': 'flat', '斜距': 'slant',

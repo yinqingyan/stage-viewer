@@ -187,6 +187,7 @@ function onLoad(root) {
   const aim = CFG.aim && { floorBelow: CFG.aim.floorBelow ?? 3, forward: audienceDir() };
   lights = buildLights(scene, model, CFG.fixtures, meshes, aim, CFG.lightGroups);
   setupLights(lights);
+  setupSpeakers(CFG.speakers);
   if (CFG.app === 'show') {
     person.visible = false;
     controls.enabled = false;
@@ -519,6 +520,42 @@ function setupMachinesPanel() {
     body.append(row);
   }
   body.querySelectorAll('[data-all]').forEach(b => b.onclick = () => machines.list.forEach(m => machines.go(m, +b.dataset.all)));
+}
+
+// ---------- 音响：配置 speakers 里的线阵、超低原样显示，按所在的最外层组（主扩左、超低…）分组，每组可显示 / 隐藏，
+// 用来检查音响有没有挡住屏幕和观众视线
+function setupSpeakers(list = []) {
+  const sec = document.getElementById('speakers'), body = sec.querySelector('.sec-body');
+  const topOf = o => { while (o.parent && o.parent !== model) o = o.parent; return o; };
+  const leaves = o => o.children.length ? o.children.reduce((n, c) => n + leaves(c), 0) : 1;
+  const under = (a, o) => { for (let p = o.parent; p; p = p.parent) if (p === a) return true; return false; };
+  const groups = new Map();  // 最外层组 -> { nodes, sub, speaker }
+  for (const s of list) {
+    const re = new RegExp(s.match), found = [];
+    model.traverse(o => re.test(o.name) && (s.parts == null || leaves(o) === s.parts) && !found.some(f => under(f, o)) && found.push(o));
+    for (const o of found) {
+      const top = topOf(o), g = groups.get(top) || groups.set(top, { nodes: [], speaker: 0, sub: 0 }).get(top);
+      g.nodes.push(o);
+      g[s.kind]++;
+    }
+  }
+  if (!groups.size) return;
+  sec.hidden = false;
+  const rows = [...groups].map(([top, g]) => {
+    const b = document.createElement('button');
+    b.className = 'lg on';
+    const what = [g.speaker && `${g.speaker} 只 线阵音箱`, g.sub && `${g.sub} 只 超低音箱`].filter(Boolean).join('、');
+    b.innerHTML = `<span translate="no"></span><span class="k">${what}</span>`;
+    b.firstChild.textContent = top === model ? '' : top.name.replace(/_/g, ' ');
+    const set = on => { g.nodes.forEach(o => o.visible = on); b.classList.toggle('on', on); };
+    b.onclick = () => set(!b.classList.contains('on'));
+    const row = document.createElement('div');
+    row.className = 'lg-row';
+    row.append(b);
+    body.append(row);
+    return set;
+  });
+  body.querySelectorAll('[data-all]').forEach(btn => btn.onclick = () => rows.forEach(set => set(btn.dataset.all === '1')));
 }
 
 // ---------- 灯光分组开关 ----------

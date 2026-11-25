@@ -2,7 +2,7 @@
 // 全部在浏览器里完成，模型不离开设计师的电脑。
 // VIEWER（查看器模板，含注入标记）由 build.mjs 在本脚本之前定义。
 // 中英两种界面：页面上固定的文字查 GEN_WORDS，代码里拼的句子用 L(中文, English)；切换语言时重画这些部分。
-import { Fbx, readGraph, detect, libraryEntry, roleOf, makeConfig, strip, textures } from './fbx.js';
+import { Fbx, readGraph, detect, libraryEntry, roleOf, makeConfig, strip, textures, SPEAKERS } from './fbx.js';
 import LIB from '../skill/stage-viewer/scripts/library.json';
 import { mountExplainer } from './explainer.js';
 import { guess, FIXTURES, fixtureParams } from './guess.js';
@@ -14,6 +14,7 @@ const ROLES = () => [
   ['', L('不处理', 'Leave as is')],
   [L('灯具', 'Lights'), [['beam', L('光束灯', 'Beam')], ['wash', L('染色灯', 'Wash')], ['strobe', L('频闪', 'Strobe')], ['bar', L('灯条', 'LED bar')]]],
   [L('桌椅', 'Furniture'), [['chair', L('椅子', 'Chair')], ['stool', L('凳子', 'Stool')], ['table', L('桌子', 'Table')]]],
+  [L('音响', 'Speakers'), [['speaker', L('线阵音箱', 'Line array')], ['sub', L('超低音箱', 'Subwoofer')]]],
 ];
 const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
@@ -297,16 +298,19 @@ $('go').onclick = async () => {
     const chosen = kinds.filter(k => k.role);
     for (const k of chosen) k.extra = !k.known && k.model != null ? fixtureParams(FIXTURES[k.model]) : undefined;
     if (fx && chosen.length) {
-      const n = chosen.reduce((s, k) => s + k.count, 0);
-      await say(L(`精简 ${n} 个灯具和桌椅…`, `Simplifying ${n} lights and furniture…`));
       const c = makeConfig(chosen, graph, LIB);
-      Object.assign(config, { fixtures: c.fixtures, props: c.props });
+      Object.assign(config, { fixtures: c.fixtures, props: c.props, speakers: c.speakers });
       // 地上的灯朝上、天上的灯朝观众席；默认只亮灯口，每组灯有自己的光束开关（默认关），不然光柱会罩住整个舞台
       if (c.fixtures.length) Object.assign(config, { aim: { floorBelow: 3 }, lightGroups: { '*': { beamSwitch: true } } });
       notes = c.notes;
-      const r = strip(fx, graph, new Set(chosen.flatMap(k => k.ids)));
-      model = new Blob(r.parts);
-      await say(`  ${mb(bytes.length)} → ${mb(model.size)}`);
+      // 音响原样保留，只精简灯具和桌椅
+      const slim = chosen.filter(k => !SPEAKERS.includes(k.role)), n = slim.reduce((s, k) => s + k.count, 0);
+      if (slim.length) {
+        await say(L(`精简 ${n} 个灯具和桌椅…`, `Simplifying ${n} lights and furniture…`));
+        const r = strip(fx, graph, new Set(slim.flatMap(k => k.ids)));
+        model = new Blob(r.parts);
+        await say(`  ${mb(bytes.length)} → ${mb(model.size)}`);
+      }
     }
     await say(L('压缩…', 'Compressing…'));
     const gz = await new Response(model.stream().pipeThrough(new CompressionStream('gzip'))).blob();

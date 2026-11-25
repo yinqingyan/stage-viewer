@@ -41,5 +41,15 @@ rig('频闪组', 'Unit', 4, 3, 7, 4, [((.5, .2, .3), (0, 0, 0), False), ((.4, .0
 rig('舞台两侧', 'LED PAR', 6, 1, 2, -5, [((.3, .3, .3), (0, 0, 0), True), ((.35, .05, .2), (0, 0, -.25), False)])
 rig('观众席', '椅子', 12, .6, 0, -9, [((.45, .45, .05), (0, 0, .45), False), ((.45, .05, .5), (0, .2, .7), False)])
 rig('桁架', 'Truss', 6, 3, 9, 0, [((3, .3, .3), (0, 0, 0), False), ((3, .05, .05), (0, 0, .15), False)])
+# 音响：主扩左右各一挂 12 只线阵（K2，逐只往下多倾一点），地上 8 只超低（KS28）
+import math
+for side, x in (('主扩左', -11), ('主扩右', 11)):
+    g = empty(side, (x, -6, 12))
+    for i in range(12):
+        u = empty(f'K2_{side}_{i + 1:02d}', (0, -0.02 * i * i, -0.36 * i), g)
+        u.rotation_euler = (math.radians(1.5 * i), 0, 0)
+        part(f'K2_{side}_{i + 1:02d}_箱体', (1.34, .4, .35), (0, 0, 0), u)
+        part(f'K2_{side}_{i + 1:02d}_网罩', (1.3, .02, .32), (0, -.21, 0), u)
+rig('超低', 'KS28', 8, 1.4, .3, -7, [((1.34, .8, .55), (0, 0, 0), False), ((1.3, .02, .5), (0, -.41, 0), False)])
 bpy.ops.export_scene.fbx(filepath=out, object_types={'EMPTY', 'MESH'}, add_leaf_bones=False, bake_anim=False)
 print('完成：', out)

@@ -6,6 +6,10 @@ import REF from '../docs/fixtures-reference.json';
 export const FIXTURES = REF.map((f, i) => ({ ...f, i, role: f.renderType === 'ledBar' ? 'bar' : f.renderType }));
 
 const TERMS = [
+  // 音响放最前：K2、KS28、主扩这些名字不会和灯混，而「线阵」「array」要先于灯条的「条」
+  ['sub', ['sub', 'subwoofer', 'ks28', 'ks21', 'k1 sb', 'sl sub', 'j sub', 'b28', '1100 lfc', '2100 lfc', '超低', '低音', '低频']],
+  ['speaker', ['line array', 'array', 'speaker', 'loudspeaker', 'k1', 'k2', 'k3', 'kara', 'gsl', 'ksl', 'j8', 'j12', 'v8', 'v12', 'vtx', 'leo', 'lyon', 'panther', 'mla', 'geo', 'hdl', 'lax',
+               '线阵', '音箱', '音响', '主扩', '侧扩', '补声', '前补', '延时', '扬声器']],
   ['strobe', ['strobe', 'atomic', 'jdc', 'color strike', 'blinder', '频闪', '爆闪', '观众灯', '四眼', '二眼', '致盲', '闪']],
   ['bar', ['bar', 'batten', 'pixel bar', 'pxl bar', 'sixbar', 'dotline', 'wall wash', 'wallwash', '灯条', '洗墙', '线条灯', '条灯', '地排', '天排灯', '条']],
   ['beam', ['beam', 'sharpy', 'pointe', 'bsw', 'hybrid', 'followspot', 'follow spot', '光束', '三合一', '四合一', '全能王', '追光', '摇头', '电脑灯', '7r', '5r', '2r', '14r', '17r']],
