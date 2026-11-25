@@ -3,6 +3,7 @@
 // VIEWER（查看器模板，含注入标记）由 build.mjs 在本脚本之前定义。
 import { Fbx, readGraph, detect, libraryEntry, roleOf, makeConfig, strip, textures } from './fbx.js';
 import LIB from '../skill/stage-viewer/scripts/library.json';
+import { mountExplainer } from './explainer.js';
 
 const MARK = '<script>/*__STAGE__*/</script>';
 const ROLES = [
@@ -16,6 +17,19 @@ const mb = n => (n / 1024 / 1024).toFixed(1) + ' MB';
 const tick = () => new Promise(r => setTimeout(r, 30));  // 让进度文字先画出来
 
 let file = null, bytes = null, format = '', fx = null, graph = null, kinds = [], texInfo = [];
+
+// ---------- 30 秒说明动画（第一次打开时才搭起来） ----------
+let explainer = null;
+$('openExplain').onclick = () => {
+  $('explain').showModal();
+  explainer ||= mountExplainer($('explainHost'));
+  explainer.play();
+};
+$('closeExplain').onclick = () => $('explain').close();
+$('explain').onclick = e => e.target === $('explain') && $('explain').close();
+$('explain').onclose = () => explainer?.stop();
+// 录制视频用：#explainer 时直接打开，并暴露逐帧渲染
+if (location.hash === '#explainer') { $('explain').showModal(); explainer = mountExplainer($('explainHost')); window.EXPLAINER = explainer; }
 
 // ---------- 说明 ----------
 $('openGuide').onclick = () => $('guide').showModal();
