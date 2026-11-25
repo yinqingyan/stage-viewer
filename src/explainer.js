@@ -35,9 +35,9 @@ const CSS = `
 .ex-screen { width:420px; height:240px; border-radius:10px; border:6px solid #2a2e38; }
 .ex-tree div { margin:8px 0; }
 .ex-sw { padding:14px 22px; border-radius:12px; background:#33507f; font-size:26px; display:flex; justify-content:space-between; width:360px; }
-.ex-play { position:absolute; inset:0; display:grid; place-items:center; background:rgba(10,11,15,.55); cursor:pointer; border:0; color:#fff; font:inherit; font-size:20px; }
+.ex-play { position:absolute; inset:0; display:grid; place-items:end center; padding-bottom:4.5%; background:rgba(10,11,15,.45); cursor:pointer; border:0; color:#fff; font:inherit; font-size:clamp(13px,2.2cqw,20px); }
 .ex-play[hidden] { display:none; }
-.ex-play span { display:grid; place-items:center; width:84px; height:84px; border-radius:50%; background:linear-gradient(135deg,#7b8cff,#b07cff); font-size:34px; margin:0 auto 12px; padding-left:6px; }
+.ex-play span { display:grid; place-items:center; width:clamp(40px,8cqw,76px); height:clamp(40px,8cqw,76px); border-radius:50%; background:linear-gradient(135deg,#7b8cff,#b07cff); font-size:clamp(16px,3.2cqw,30px); margin:0 auto 1.2cqw; padding-left:.5cqw; }
 `;
 
 const html = () => `
@@ -188,6 +188,6 @@ export function mountExplainer(host) {
   };
   const play = () => { cancelAnimationFrame(raf); btn.hidden = true; start = performance.now(); raf = requestAnimationFrame(frame); };
   btn.onclick = play;
-  render(0);
+  render(2);  // 封面：标题完全显示的那一帧（第 0 秒还没淡入，是空的）
   return { play, render, stop: () => cancelAnimationFrame(raf), length: LEN };
 }

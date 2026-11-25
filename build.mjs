@@ -2,7 +2,7 @@
 //    模型和配置留空（<script>/*__STAGE__*/</script>），由生成器网页或 skill 里的 build_html.py 注入。
 // 2. 生成器：设计师用的单文件网页，内嵌查看器模板、型号库和模型准备说明。
 // 用法：node build.mjs   → skill/stage-viewer/assets/viewer-template.html、dist/舞美生成器.html、dist/stage-viewer-skill.zip
-import { readFileSync, writeFileSync, mkdirSync, rmSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, rmSync, copyFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import * as esbuild from 'esbuild';
 
@@ -27,6 +27,8 @@ const page = readFileSync('src/generator.html', 'utf8')
   .replace('<script>/*__APP__*/</script>', () => `<script>const VIEWER=${viewer};${genApp}</script>`);
 mkdirSync('dist', { recursive: true });
 writeFileSync('dist/舞美生成器.html', page);
+mkdirSync('dist/video', { recursive: true });
+for (const l of ['zh', 'en']) copyFileSync(`docs/video/guide-${l}.mp4`, `dist/video/guide-${l}.mp4`);  // 网页上的「下载视频」
 console.log(`生成器：dist/舞美生成器.html（${(page.length / 1024).toFixed(0)} KB）`);
 
 rmSync('dist/stage-viewer-skill.zip', { force: true });

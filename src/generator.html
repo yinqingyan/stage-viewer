@@ -34,7 +34,8 @@
   .pill { display:inline-flex; align-items:center; gap:8px; padding:9px 16px; background:rgba(255,255,255,.04); color:var(--text); border:1px solid var(--line2); border-radius:999px; font:inherit; cursor:pointer; backdrop-filter:blur(8px); transition:border-color .2s, background .2s; }
   .pill:hover { border-color:var(--accent); background:rgba(123,140,255,.1); }
   .pill.play { background:var(--grad); border-color:transparent; font-weight:600; box-shadow:0 10px 30px -12px rgba(123,140,255,.8); }
-  dialog.wide { max-width:1100px; }
+  .video { margin-top:6px; padding:10px; background:var(--card); border:1px solid var(--line); border-radius:20px; box-shadow:0 30px 60px -30px rgba(0,0,0,.9); }
+  .video-foot { display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; padding:10px 8px 2px; color:var(--dim); font-size:13px; }
   .lang { position:absolute; top:16px; right:16px; z-index:2; padding:6px 14px; background:rgba(255,255,255,.06); color:var(--text); border:1px solid var(--line2); border-radius:999px; font:inherit; font-size:13px; cursor:pointer; }
   .lang:hover { border-color:var(--accent); }
   html[lang=en] [data-lang=zh], html:not([lang=en]) [data-lang=en] { display:none; }
@@ -141,6 +142,11 @@
 </header>
 
 <main>
+  <section class="video" id="video">
+    <div id="explainHost"></div>
+    <div class="video-foot"><span>30 秒看懂模型要求</span><a id="videoDl" download>⬇ 下载视频（MP4）</a></div>
+  </section>
+
   <section class="step" id="s1">
     <h2><span class="n">1</span>选择模型</h2>
     <p class="hint">支持 FBX（推荐，3ds Max 导出时勾选「嵌入的媒体」，格式选「二进制」）和 GLB。</p>
@@ -202,11 +208,6 @@
 
   <footer>有问题直接联系 <a href="mailto:stageviewer.app@outlook.com">stageviewer.app@outlook.com</a> · 免费开源 · <a href="https://github.com/yinqingyan/stage-viewer">GitHub</a></footer>
 </main>
-
-<dialog id="explain" class="wide">
-  <div class="close"><button id="closeExplain">关闭</button></div>
-  <div style="padding:8px 20px 22px" id="explainHost"></div>
-</dialog>
 
 <dialog id="guide">
   <div class="close"><button id="closeGuide">关闭</button></div>

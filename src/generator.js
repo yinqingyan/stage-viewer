@@ -33,7 +33,7 @@ addWords({
   '把 3ds Max 导出的舞美模型变成一个 html 文件。双击就能在电脑、手机上三维浏览，走进观众席看舞台，发微信、邮件即可分享。':
     'Turn your 3ds Max stage model into a single html file. Double-click to explore it in 3D on a computer or phone, walk into the audience and look at the stage, and share it by email or chat.',
   '✓ 模型只在你的电脑上处理，不会上传到任何地方': '✓ Your model is processed on your own computer and never uploaded',
-  '▶ 30 秒看懂模型要求': '▶ Model checklist in 30 seconds',
+  '▶ 30 秒看懂模型要求': '▶ Model checklist in 30 seconds', '30 秒看懂模型要求': 'The model checklist in 30 seconds',
   '📖 模型准备说明': '📖 Model preparation guide',
   '有问题直接联系：': 'Questions? Contact us: ',
   '选择模型': 'Choose your model',
@@ -84,21 +84,22 @@ function applyLang(switched) {
   renderInfo();
   renderKinds();
   showName();
-  if (switched && explainer) { explainer.stop(); explainer = null; $('explainHost').innerHTML = ''; }
+  if (switched || !explainer) mountVideo();
 }
 
-// ---------- 30 秒说明动画（第一次打开时才搭起来） ----------
+// ---------- 30 秒说明动画：直接放在页面上，点一下播放；下面给对应语言的 MP4 下载 ----------
 let explainer = null;
+function mountVideo() {
+  explainer?.stop();
+  explainer = mountExplainer($('explainHost'));
+  $('videoDl').href = `video/guide-${lang}.mp4`;
+  $('videoDl').textContent = L('⬇ 下载视频（MP4）', '⬇ Download video (MP4)');
+  if (location.hash === '#explainer') window.EXPLAINER = explainer;  // 录制视频用：暴露逐帧渲染
+}
 $('openExplain').onclick = () => {
-  $('explain').showModal();
-  explainer ||= mountExplainer($('explainHost'));
+  $('video').scrollIntoView({ behavior: 'smooth', block: 'center' });
   explainer.play();
 };
-$('closeExplain').onclick = () => $('explain').close();
-$('explain').onclick = e => e.target === $('explain') && $('explain').close();
-$('explain').onclose = () => explainer?.stop();
-// 录制视频用：#explainer 时直接打开，并暴露逐帧渲染
-if (location.hash === '#explainer') { $('explain').showModal(); explainer = mountExplainer($('explainHost')); window.EXPLAINER = explainer; }
 
 // ---------- 说明 ----------
 $('openGuide').onclick = () => $('guide').showModal();

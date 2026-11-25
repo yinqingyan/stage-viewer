@@ -6,6 +6,7 @@ cd "$(dirname "$0")"
 node build.mjs
 tmp=$(mktemp -d)
 cp "dist/舞美生成器.html" "$tmp/index.html"
+cp -r dist/video "$tmp/video"
 touch "$tmp/.nojekyll"
 git -C "$tmp" init -q -b gh-pages
 git -C "$tmp" add -A
