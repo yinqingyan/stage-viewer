@@ -136,8 +136,8 @@ def main():
         if a.inspect:
             sys.exit('--inspect 需要模型文件')
     ext = os.path.splitext(a.model or '')[1].lower()
-    if a.model and ext not in ('.fbx', '.glb'):
-        sys.exit('只支持 .fbx 和 .glb。其他格式请先在建模软件里导出为 FBX（3ds Max：文件 → 导出 → FBX）。')
+    if a.model and ext not in ('.fbx', '.glb', '.obj', '.3ds', '.dae'):
+        sys.exit('只支持 .fbx、.glb、.obj、.3ds、.dae。其他格式请先在建模软件里导出为 FBX 或 GLB。')
     raw = open(a.model, 'rb').read() if a.model else None
 
     if ext == '.fbx':

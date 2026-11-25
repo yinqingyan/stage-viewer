@@ -4,6 +4,9 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { FBXLoader } from './vendor/FBXLoader.js';
+import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
+import { TDSLoader } from 'three/examples/jsm/loaders/TDSLoader.js';
+import { ColladaLoader } from 'three/examples/jsm/loaders/ColladaLoader.js';
 import { buildProps } from './props.js';
 import { buildLights } from './lights.js';
 import { setupCameras } from './cameras.js';
@@ -219,9 +222,45 @@ async function loadModel({ format, gzip, data }) {
     root.scale.setScalar((root.userData.unitScaleFactor ?? 1) / 100);
     return root;
   }
+  if (format === 'obj') return fitUnits(new OBJLoader().parse(new TextDecoder().decode(buf)), false);
+  if (format === '3ds') return fitUnits(new TDSLoader().parse(buf, ''), true);
+  if (format === 'dae') {  // Collada 自己记了单位和哪个轴朝上，读取器会换算好
+    const dae = new ColladaLoader().parse(new TextDecoder().decode(buf), '');
+    dae.scene.animations = dae.animations || [];
+    return dae.scene;
+  }
   const gltf = await new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).parseAsync(buf, '');
   gltf.scene.animations = gltf.animations;
   return gltf.scene;
+}
+
+// OBJ、3DS 文件里不记单位和朝向，按舞台的样子猜：
+// 朝向：3DS 一定是 Z 轴朝上（3ds Max 的习惯）；OBJ 看哪个方向的水平面最多——舞台有大片台面、地面、平台顶，
+//       面朝 Z 的总面积比朝 Y 的大，就当作 Z 轴朝上，转正（只看高度会被高高吊起的屏幕、音响骗）
+// 单位：舞台一般 5–120 米。最长边 ≤ 300 当作米；除以 100 后 ≤ 120 当作厘米；再大当作毫米
+function fitUnits(root, zUp) {
+  root.updateMatrixWorld(true);
+  if (!zUp) {
+    let ay = 0, az = 0;
+    const a = new THREE.Vector3(), b = new THREE.Vector3(), c = new THREE.Vector3(), n = new THREE.Vector3();
+    root.traverse(o => {
+      const p = o.isMesh && o.geometry.attributes.position;
+      if (!p) return;
+      const idx = o.geometry.index, tri = idx ? idx.count / 3 : p.count / 3;
+      for (let i = 0; i < tri; i++) {
+        const [i0, i1, i2] = idx ? [idx.getX(3 * i), idx.getX(3 * i + 1), idx.getX(3 * i + 2)] : [3 * i, 3 * i + 1, 3 * i + 2];
+        a.fromBufferAttribute(p, i0).applyMatrix4(o.matrixWorld); b.fromBufferAttribute(p, i1).applyMatrix4(o.matrixWorld); c.fromBufferAttribute(p, i2).applyMatrix4(o.matrixWorld);
+        n.crossVectors(b.sub(a), c.sub(a));  // 长度 = 面积 × 2，各分量 = 投影面积
+        ay += Math.abs(n.y); az += Math.abs(n.z);
+      }
+    });
+    zUp = az > ay;
+  }
+  if (zUp) root.rotation.x = -Math.PI / 2;
+  const s = new THREE.Box3().setFromObject(root).getSize(new THREE.Vector3());
+  const m = Math.max(s.x, s.y, s.z);
+  root.scale.setScalar(m <= 300 ? 1 : m / 100 <= 120 ? 0.01 : 0.001);
+  return root;
 }
 
 const failed = msg => document.querySelector('#loading div').textContent = msg;
