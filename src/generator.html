@@ -223,13 +223,15 @@
 
   /* ---------- 页脚 ---------- */
   .foot { margin-top:48px; border-top:1px solid var(--line); background:var(--bg2); }
-  .foot .wrap { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px 24px; padding-top:28px; padding-bottom:36px; color:var(--dim); font-size:14px; }
+  .foot .wrap { display:block; padding-top:28px; padding-bottom:36px; color:var(--dim); font-size:14px; }
   .foot .brand { font-size:14px; }
   .foot .brand span { color:var(--faint); font-weight:normal; margin-left:4px; }
-  .foot-r { display:flex; flex-wrap:wrap; align-items:center; gap:6px 18px; }
-  .contact { display:flex; align-items:center; gap:14px; }
-  .mascot:empty { display:none; }
-  .mascot img { display:block; width:72px; height:auto; }
+  .contact { position:relative; max-width:620px; margin:120px auto 0; padding:22px 28px 24px; border-radius:var(--r-md); text-align:center; color:var(--soft); font-size:15px; line-height:1.7;
+             background:linear-gradient(180deg, var(--card2), var(--card)); border:1px solid var(--line2); }
+  /* 图片底边是扒着的手，压在卡片上沿 12px，像抓着边往外看 */
+  .mascot { position:absolute; left:50%; bottom:calc(100% - 13px); width:132px; height:auto; transform:translateX(-50%); transition:transform .35s cubic-bezier(.3,1.6,.5,1); pointer-events:none; }
+  .contact:hover .mascot { transform:translateX(-50%) translateY(-10px); }
+  .foot-bar { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-top:32px; padding-top:20px; border-top:1px solid var(--line); }
 
   /* ---------- 模型准备说明 ---------- */
   dialog { max-width:780px; width:calc(100% - 32px); max-height:calc(100% - 48px); padding:0; background:var(--card2); color:var(--text); border:1px solid var(--line2); border-radius:var(--r-lg); box-shadow:0 40px 100px -20px rgba(0,0,0,.9); }
@@ -295,7 +297,8 @@
     .kinds td:first-child { padding-left:0; }
     .kinds td.where { grid-column:1 / -1; }
     .kinds td.role { grid-column:1 / -1; margin-top:6px; }
-    .foot .wrap { flex-direction:column; align-items:flex-start; }
+    .contact { margin-top:110px; padding:20px 18px 22px; font-size:14px; }
+    .mascot { width:116px; }
     .guide { padding:0 18px 24px; }
   }
 </style>
@@ -416,12 +419,13 @@
 
 <footer class="foot">
   <div class="wrap">
-    <span class="brand">Stage Viewer <span>免费开源</span></span>
-    <div class="foot-r">
-      <div class="contact">
-        <div class="mascot"><!-- 撒库拉小人放这里：<img src="…" alt="撒库拉"> --></div>
-        <span>有需求和建议？认识撒库拉的直接微信，不认识的发邮件：<a href="mailto:stageviewer.app@outlook.com">stageviewer.app@outlook.com</a></span>
-      </div>
+    <!-- 联系卡片：撒库拉趴在卡片上沿偷看（图片由 build.mjs 从 docs/img/sakula-peek.webp 内嵌） -->
+    <div class="contact">
+      <img class="mascot" src="__SAKULA__" alt="撒库拉" translate="no">
+      <span>有需求和建议？认识撒库拉的直接微信，不认识的发邮件：<a href="mailto:stageviewer.app@outlook.com">stageviewer.app@outlook.com</a></span>
+    </div>
+    <div class="foot-bar">
+      <span class="brand">Stage Viewer <span>免费开源</span></span>
       <a href="https://github.com/yinqingyan/stage-viewer">GitHub</a>
     </div>
   </div>
