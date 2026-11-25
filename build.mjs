@@ -25,6 +25,8 @@ const page = readFileSync('src/generator.html', 'utf8')
   .replace('<!--__GUIDE__-->', () => markdown(readFileSync('docs/模型准备说明.md', 'utf8')))
   .replace('<!--__GUIDE_EN__-->', () => markdown(readFileSync('docs/model-guide.en.md', 'utf8')))
   .replace('__SAKULA__', () => 'data:image/webp;base64,' + readFileSync('docs/img/sakula-peek.webp').toString('base64'))  // 页脚撒库拉小人
+  .replace('__SAKULA_IDEA__', () => 'data:image/webp;base64,' + readFileSync('docs/img/sakula-idea.webp').toString('base64'))  // 生成成功
+  .replace('__SAKULA_BOOM__', () => 'data:image/webp;base64,' + readFileSync('docs/img/sakula-boom.webp').toString('base64'))  // 生成失败
   .replace('<script>/*__APP__*/</script>', () => `<script>const VIEWER=${viewer};${genApp}</script>`);
 mkdirSync('dist', { recursive: true });
 writeFileSync('dist/舞美生成器.html', page);

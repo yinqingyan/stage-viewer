@@ -231,6 +231,9 @@
   /* 图片底边是扒着的手，压在卡片上沿 12px，像抓着边往外看 */
   .mascot { position:absolute; left:50%; bottom:calc(100% - 13px); width:132px; height:auto; transform:translateX(-50%); transition:transform .35s cubic-bezier(.3,1.6,.5,1); pointer-events:none; }
   .contact:hover .mascot { transform:translateX(-50%) translateY(-10px); }
+  .with-face { display:flex; align-items:center; gap:16px; }
+  .with-face .face { flex:none; width:76px; height:auto; animation:pop .5s cubic-bezier(.3,1.6,.5,1); }
+  @keyframes pop { from { transform:scale(.4) rotate(-8deg); opacity:0; } }
   .foot-bar { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-top:32px; padding-top:20px; border-top:1px solid var(--line); }
 
   /* ---------- 模型准备说明 ---------- */
@@ -435,6 +438,9 @@
   <div class="close"><button id="closeGuide">关闭</button></div>
   <div class="guide" translate="no"><div data-lang="zh"><!--__GUIDE__--></div><div data-lang="en"><!--__GUIDE_EN__--></div></div>
 </dialog>
+
+<!-- 撒库拉表情：生成成功 / 失败时配在提示旁边（build.mjs 内嵌图片） -->
+<template id="faces"><img class="face idea" src="__SAKULA_IDEA__" alt="" translate="no"><img class="face boom" src="__SAKULA_BOOM__" alt="" translate="no"></template>
 
 <script>/*__APP__*/</script>
 </body>

@@ -19,6 +19,7 @@ const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;',
 const user = s => `<span translate="no">${esc(s)}</span>`;  // 设计师自己的名字（文件名、组名），不翻译
 const mb = n => (n / 1024 / 1024).toFixed(1) + ' MB';
 const tick = () => new Promise(r => setTimeout(r, 30));  // 让进度文字先画出来
+const face = kind => $('faces').content.querySelector('.' + kind).outerHTML;  // 撒库拉表情：idea 成功、boom 失败
 
 let file = null, bytes = null, format = '', fx = null, graph = null, kinds = [], texInfo = [];
 let stage1 = null;  // 第 1 步显示什么：'reading' | 'analyzing' | 'badType' | 'tooBig' | 'ready'（+ 附加提示）
@@ -281,7 +282,7 @@ $('go').onclick = async () => {
     const url = URL.createObjectURL(html);
     const a = Object.assign(document.createElement('a'), { href: url, download: name, className: 'dl', textContent: `⬇ ${L('下载', 'Download')} ${name}（${mb(html.size)}）` });
     a.translate = false;
-    $('result').innerHTML = `<div class="msg ok">${L('✓ 生成好了。如果没有自动下载，点下面的按钮。双击下载的文件就能在浏览器里打开。', '✓ Done. If the download did not start, use the button below. Double-click the file to open it in a browser.')}</div>`;
+    $('result').innerHTML = `<div class="msg ok with-face">${face('idea')}<span>${L('✓ 生成好了。如果没有自动下载，点下面的按钮。双击下载的文件就能在浏览器里打开。', '✓ Done. If the download did not start, use the button below. Double-click the file to open it in a browser.')}</span></div>`;
     $('result').append(a);
     const noteText = n => n.type === 'dup'
       ? L(`${n.id}（${esc(n.name)}）：节点名有重名，可能多选或漏选几个`, `${n.id} (${esc(n.name)}): duplicate node names, a few may be missed or extra`)
@@ -291,7 +292,7 @@ $('go').onclick = async () => {
     stepState(4, 'done');
   } catch (e) {
     await say('');
-    $('result').innerHTML = `<div class="msg bad">${L('生成失败：', 'Generation failed: ')}${esc(e.message)}<br>${L(`请把这段提示和模型大小发到 ${MAIL}，我们来看。`, `Please send this message and your model size to ${MAIL} and we will take a look.`)}</div>`;
+    $('result').innerHTML = `<div class="msg bad with-face">${face('boom')}<span>${L('生成失败：', 'Generation failed: ')}${esc(e.message)}<br>${L(`请把这段提示和模型大小发到 ${MAIL}，我们来看。`, `Please send this message and your model size to ${MAIL} and we will take a look.`)}</span></div>`;
   } finally {
     go.disabled = false;
   }
