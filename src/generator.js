@@ -35,7 +35,7 @@ addWords({
   '✓ 模型只在你的电脑上处理，不会上传到任何地方': '✓ Your model is processed on your own computer and never uploaded',
   '▶ 30 秒看懂模型要求': '▶ Model checklist in 30 seconds', '30 秒看懂模型要求': 'The model checklist in 30 seconds',
   '📖 模型准备说明': '📖 Model preparation guide',
-  '有问题直接联系：': 'Questions? Contact us: ',
+  '有需求和建议？认识撒库拉的直接微信，不认识的发邮件：': 'Bugs or feature requests? Contact: ',
   '选择模型': 'Choose your model',
   '支持 FBX（推荐，3ds Max 导出时勾选「嵌入的媒体」，格式选「二进制」）和 GLB。':
     'FBX (recommended — in 3ds Max tick “Embed Media” and choose “Binary”) or GLB.',
@@ -67,7 +67,12 @@ addWords({
     'The direction decides the type: up/down is a lift, sideways is a slide, turning is a rotation. Tested with Blender exports; 3ds Max exports are still being verified — tell us if something does not move right.',
   '详细做法见模型准备说明 →': 'Details in the model preparation guide →',
   '生成网页': 'Generate', '将导出：': 'Will save as:', '生成并下载': 'Generate and download',
-  '有问题直接联系': 'Questions? Contact', '· 免费开源 ·': '· Free and open source ·', '关闭': 'Close',
+  '· 免费开源 ·': '· Free and open source ·', '关闭': 'Close',
+  '模型只在你的电脑上处理，不会上传到任何地方': 'Your model is processed on your own computer and never uploaded',
+  '全程在浏览器里完成，免费开源': 'Everything runs in your browser — free and open source',
+  '模型准备说明': 'Model guide', '只在本机读取，不会上传': 'Read locally, never uploaded',
+  '四步，做出你的三维舞台': 'Four steps to your 3D stage', '怎么让识别更准': 'FOR BEST DETECTION',
+  '可选：会动的机械': 'OPTIONAL · MOVING MACHINERY', '免费开源': 'Free and open source',
 });
 translatePage();
 const langBtn = $('langBtn');

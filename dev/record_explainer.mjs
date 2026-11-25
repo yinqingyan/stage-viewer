@@ -1,5 +1,5 @@
 // 开发工具：把 30 秒说明动画逐帧截图（生成器加 #explainer 打开），再用 ffmpeg 合成视频。
-// 用法：node dev/record_explainer.mjs file:///…/dist/舞美生成器.html[?lang=en] 帧目录 0:29.9667:0.033333333 1280
+// 用法：node dev/record_explainer.mjs file:///…/dist/舞美生成器.html?lang=zh（或 en，一定要写，否则跟浏览器语言） 帧目录 0:29.9667:0.033333333 1280
 //      ffmpeg -framerate 30 -i 帧目录/f%04d.png -vf "scale=1280:720,format=yuv420p" -c:v libx264 -crf 20 30秒说明.mp4
 // 没有 ffmpeg 时：pip install --target 某目录 imageio-ffmpeg，它自带一个 ffmpeg 程序。
 import { spawn } from 'node:child_process';
@@ -17,7 +17,7 @@ const ev = async x => (await send('Runtime.evaluate', { expression: x, returnByV
 await send('Runtime.enable');
 await send('Emulation.setDeviceMetricsOverride', { width: +width + 120, height: 1000, deviceScaleFactor: 1, mobile: false });
 await send('Page.navigate', { url: url + '#explainer' }); await sleep(1500);
-await ev(`document.querySelector('.ex-play').hidden = true; document.getElementById('explainHost').style.cssText = 'position:fixed;left:0;top:0;width:${width}px;z-index:99'; 1`);
+await ev(`document.querySelector('.ex-play').hidden = true; const h = document.getElementById('explainHost'); document.body.append(h); h.style.cssText = 'position:fixed;left:0;top:0;width:${width}px;z-index:2147483647;background:#0a0b0f'; 1`);
 await sleep(300);
 const r = await ev(`JSON.stringify(document.querySelector('.ex').getBoundingClientRect())`), box = JSON.parse(r);
 const ts = times.includes(':') ? (([a, b, step]) => { const o = []; for (let t = a; t <= b + 1e-9; t += step) o.push(+t.toFixed(4)); return o; })(times.split(':').map(Number)) : times.split(',').map(Number);

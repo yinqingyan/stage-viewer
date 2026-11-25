@@ -67,7 +67,7 @@ The generator asks which side of the stage the audience is on — pick Front, Ba
 
 ## Troubleshooting
 
-For anything not covered here, contact **stageviewer.app@outlook.com**.
+Bugs or feature requests? Contact: **stageviewer.app@outlook.com**
 
 - **Screens are white**: “Embed Media” was off — export again with it on.
 - **People are the wrong size**: wrong export units — use centimeters or meters.

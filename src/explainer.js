@@ -115,7 +115,7 @@ const html = () => `
     <div class="ex-card ex-ok" id="exHtml">${L('舞美.html', 'stage.html')}</div>
   </div>
   <div style="font-size:40px;font-weight:800;margin-top:50px">${L('拖进生成器，下载 html，双击打开', 'Drop it in, download the html, double-click to open')}</div>
-  <div class="ex-dim" style="font-size:24px;margin-top:22px">${L('有问题直接联系', 'Questions?')} stageviewer.app@outlook.com</div>
+  <div class="ex-dim" style="font-size:24px;margin-top:22px">${L('有需求和建议？认识撒库拉的直接微信，不认识的发邮件：', 'Bugs or feature requests? Contact: ')}stageviewer.app@outlook.com</div>
 </div>
 
 <div class="ex-l ex-cap" id="exCap"></div>
