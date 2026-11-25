@@ -108,7 +108,7 @@
 
   <section class="step off" id="s3">
     <h2><span class="n">3</span>基本设置</h2>
-    <label class="field">项目名称 <span class="hint">显示在网页标题上，打开后也可以改</span>
+    <label class="field">项目名称 <span class="hint">导出的网页文件名和网页标题都用这个名字</span>
       <input type="text" id="title" placeholder="比如：2027 春季发布会">
     </label>
     <div class="field" style="margin-top:14px"><b>观众席在舞台的哪一侧</b>
@@ -124,7 +124,8 @@
 
   <section class="step off" id="s4">
     <h2><span class="n">4</span>生成网页</h2>
-    <button class="go" id="go">生成并下载</button>
+    <p class="hint">将导出：<b id="outName" style="color:var(--text)">—</b></p>
+    <button class="go" id="go" style="margin-top:6px">生成并下载</button>
     <div id="progress"></div>
     <div id="result"></div>
   </section>

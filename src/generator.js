@@ -169,6 +169,7 @@ async function load(f) {
   }
   info.innerHTML = `<div class="msg ok">✓ ${esc(f.name)}（${mb(f.size)}）</div>` + note;
   if (!$('title').value) $('title').value = f.name.replace(/\.[^.]+$/, '');
+  showName();
   renderKinds();
   stepState(1, 'done');
   [2, 3, 4].forEach(n => stepState(n, 'on'));
@@ -226,6 +227,12 @@ function renderKinds() {
   });
 }
 
+// ---------- 3. 基本设置 ----------
+const projectName = () => $('title').value.trim() || (file ? file.name.replace(/\.[^.]+$/, '') : '');
+const fileName = () => projectName().replace(/[\\/:*?"<>|]/g, '_') + '.html';
+const showName = () => $('outName').textContent = projectName() ? fileName() : '—';
+$('title').oninput = showName;
+
 // ---------- 4. 生成 ----------
 function toBase64(blob) {
   return new Promise((ok, fail) => {
@@ -242,7 +249,7 @@ $('go').onclick = async () => {
   prog.textContent = '';
   $('result').innerHTML = '';
   try {
-    const title = $('title').value.trim() || file.name.replace(/\.[^.]+$/, '');
+    const title = projectName();
     const config = { title, audience: document.querySelector('input[name=side]:checked').value };
     let model = new Blob([bytes]), notes = [];
     const chosen = kinds.filter(k => k.role);
@@ -265,7 +272,7 @@ $('go').onclick = async () => {
     const stage = `<script>window.STAGE={"model":{"format":"${format}","gzip":true,"data":"`;
     const tail = `"},"config":${JSON.stringify(config).replace(/</g, '\\u003c')}}</script>`;
     const html = new Blob([VIEWER.slice(0, i), stage, data, tail, VIEWER.slice(i + MARK.length)], { type: 'text/html' });
-    const name = title.replace(/[\\/:*?"<>|]/g, '_') + '.html';
+    const name = fileName();
     const url = URL.createObjectURL(html);
     const a = Object.assign(document.createElement('a'), { href: url, download: name, className: 'dl', textContent: `⬇ 下载 ${name}（${mb(html.size)}）` });
     $('result').innerHTML = '<div class="msg ok">✓ 生成好了。如果没有自动下载，点下面的按钮。双击下载的文件就能在浏览器里打开。</div>';
