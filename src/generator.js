@@ -58,7 +58,6 @@ addWords({
   '确认灯具和桌椅': 'Confirm lights and furniture',
   '网页会找出模型里重复出现的东西（同一款灯、同一款椅子），由你告诉它每种是什么。选了用途的会换成简单形状（灯口发光、光束、简单桌椅），文件会小很多。': 'Repeated objects in your model (the same light, the same chair) are found automatically; you tell it what each one is. Anything you give a role becomes a simple shape (glowing lens, beam, simple furniture), which makes the file much smaller.',
   '已认出': 'Recognised', '自己选用途': 'You pick the role', '不处理': 'Leave as is',
-  '：型号库里有的，参数准确，不用管。目前库还很小，只有 3d66 模型库的 4 款灯和 3 款桌椅，所以多数型号要你自己选。': ': it is in our library, so the settings are exact — nothing to do. The library is still small (4 lights and 3 furniture models from the 3d66 model library), so most types need you to pick.',
   '：灯口放在灯具中心、用默认大小，光束方向自动定（地上的灯朝上，天上的灯朝观众席），位置是近似的。': ': the lens sits at the fixture centre with a default size, and the beam is aimed automatically (floor lights point up, overhead lights face the audience), so the position is approximate.',
   '：不是灯具桌椅、或者拿不准的选这个。按模型原样显示，但不发光、没有灯光开关，文件也大一些。': ': for anything that is not a light or furniture, or when unsure. It is shown as modelled, but does not glow, has no light switch, and keeps the file larger.',
   '想让你常用的灯被自动认出？把一台灯的模型发给撒库拉（联系方式在页面最下面），我们加进库里。': 'Want your usual fixtures recognised automatically? Send one fixture model to us (contact at the bottom of the page) and we will add it to the library.',
@@ -83,10 +82,17 @@ langBtn.onclick = () => {
   applyLang(true);
 };
 // switched：真的换了语言，说明动画要按新语言重搭
+// 「已认出」说明里的型号库数量按 library.json 实际收录的显示，库变大不用改字
+function renderLibNote() {
+  const n = LIB.fixtures.length, p = LIB.props.length;
+  $('libNote').textContent = L(`：型号库里有的，参数准确，不用管。型号库还在扩充，目前收录 ${n} 款灯、${p} 款桌椅，所以多数型号要你自己选。`,
+    `: it is in our library, so the settings are exact — nothing to do. The library is still growing (${n} lights and ${p} furniture models so far), so most types need you to pick.`);
+}
 function applyLang(switched) {
   langBtn.textContent = lang === 'en' ? '中文' : 'English';
   document.title = lang === 'en' ? 'Stage Viewer Generator' : '舞美三维网页生成器';
   translatePage();
+  renderLibNote();
   renderInfo();
   renderKinds();
   showName();
@@ -218,7 +224,9 @@ function roleSelect(k) {
 const LIGHT_ROLES = ['beam', 'wash', 'strobe', 'bar'];
 function modelSelect(k) {
   if (k.known || !LIGHT_ROLES.includes(k.role)) return '';
-  const list = FIXTURES.filter(f => f.role === k.role), brands = [...new Set(list.map(f => f.brand))];
+  const list = FIXTURES.filter(f => f.role === k.role), cn = b => /[\u4e00-\u9fff]/.test(b);
+  // 中文界面国产品牌（品牌名带中文的）排前面，英文界面国际品牌排前面
+  const brands = [...new Set(list.map(f => f.brand))].sort((a, b) => (cn(b) - cn(a)) * (lang === 'en' ? -1 : 1));
   const opts = brands.map(b => `<optgroup label="${esc(b)}">${list.filter(f => f.brand === b).map(f =>
     `<option value="${f.i}"${k.model === f.i ? ' selected' : ''}>${esc(f.model)}</option>`).join('')}</optgroup>`).join('');
   return `<select data-m="${k.id}" class="model ${k.model != null ? 'set' : ''}" translate="no"><option value="">${L('通用（默认大小）', 'Generic (default size)')}</option>${opts}</select>`;

@@ -42,7 +42,7 @@ The page finds **repeated objects** in your model (the same light, the same chai
 | **You pick a role**: Beam / Wash / Strobe / LED bar / Chair / Stool / Table | The lens sits at the fixture centre with a default size; the beam is aimed automatically (floor lights point up, overhead lights face the audience), so the position is approximate |
 | **Leave as is** | Shown exactly as modelled, but it does not glow, has no light switch and keeps the file larger. Use it for anything that is not a light or furniture, or when unsure |
 
-**The library is still small**: it knows 4 lights from the 3d66 model library (one beam, one wash, one strobe, one LED bar) and 3 furniture models, so most types need you to pick. **Want your usual fixtures recognised automatically? Send one fixture model to us** (contact at the bottom of the page); we work out its lens and add it to the library, so everyone gets it recognised from then on.
+**The library is still growing** and holds only a few models so far, so most types need you to pick. **Want your usual fixtures recognised automatically? Send one fixture model to us** (contact at the bottom of the page); we work out its lens and add it to the library, so everyone gets it recognised from then on.
 
 A model with hundreds of fixtures can be over 1 GB — that is fine; after simplifying it is usually a few dozen MB.
 

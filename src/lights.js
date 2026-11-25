@@ -16,7 +16,7 @@ import * as THREE from 'three';
 
 export const TYPES = {
   // 默认光束角、灯口大小按主流灯具的规格定（见 docs/灯具资料.md 第 5 节）
-  beam:   { label: '光束灯', angle: 3,  length: 40, intensity: 0.28,  size: 0.075 },  // 窄、清晰的光柱；灯口约 Ø150 mm
+  beam:   { label: '光束灯', angle: 2,  length: 40, intensity: 0.28,  size: 0.08 },   // 窄、清晰的光柱；国产光束灯多为 1.2–2°，灯口约 Ø160 mm
   wash:   { label: '染色灯', angle: 20, length: 25, intensity: 0.08,  size: 0.13 },   // 宽、柔；常用 20° 左右
   strobe: { label: '频闪',   angle: 60, length: 3,  intensity: 0.10,  size: [0.36, 0.12] },  // 发光面板（如 GLP JDC1 约 390×150 mm），光很快散开
   bar:    { label: '灯条',   angle: 25, length: 8,  intensity: 0.035, size: [1, 0.08] },  // 1 米长灯条，扇形光片

@@ -8,7 +8,7 @@ export const FIXTURES = REF.map((f, i) => ({ ...f, i, role: f.renderType === 'le
 const TERMS = [
   ['strobe', ['strobe', 'atomic', 'jdc', 'color strike', 'blinder', '频闪', '爆闪', '观众灯', '四眼', '二眼', '致盲', '闪']],
   ['bar', ['bar', 'batten', 'pixel bar', 'pxl bar', 'sixbar', 'dotline', 'wall wash', 'wallwash', '灯条', '洗墙', '线条灯', '条灯', '地排', '天排灯', '条']],
-  ['beam', ['beam', 'sharpy', 'pointe', 'bsw', 'hybrid', 'followspot', 'follow spot', '光束', '三合一', '四合一', '全能王', '追光', '摇头', '电脑灯', '7r', '2r', '17r']],
+  ['beam', ['beam', 'sharpy', 'pointe', 'bsw', 'hybrid', 'followspot', 'follow spot', '光束', '三合一', '四合一', '全能王', '追光', '摇头', '电脑灯', '7r', '5r', '2r', '14r', '17r']],
   ['wash', ['wash', 'par', 'par64', 'led par', 'profile', 'spot', 'framing', 'fresnel', 'cyc', 'leko', 'ellipsoidal', '染色', '帕灯', '帕', '蜂眼', '蜂巢', '切割', '图案', '成像', '面光', '柔光', '聚光']],
   ['chair', ['chair', 'seat', '椅']],
   ['stool', ['stool', '凳']],
@@ -28,7 +28,7 @@ function has(text, word) {
 // 长的先匹配（X4 Bar 先于 X4）
 const GENERIC = new Set(['par', 'led par', 'beam', 'wash', 'bar', 'strobe', 'spot', 'profile', 'framing', 'batten', 'blinder', 'hybrid', 'bsw', 'led', 'laser', 'moving head', 'zoom', 'pixel', 'pixel bar', 'wall wash', 'followspot', 'ellipsoidal', 'leko', 'fresnel', 'cyc', 'ip65', 'outdoor']);
 const MODEL_WORDS = FIXTURES.flatMap(f => f.keywords
-  .filter(k => k.toLowerCase() !== f.brand.toLowerCase() && !/^\d+$/.test(k) && k.length >= 3 && !GENERIC.has(norm(k)) && !/[\u4e00-\u9fff]/.test(k))
+  .filter(k => !f.brand.toLowerCase().includes(k.toLowerCase()) && !/^\d+$/.test(k) && k.length >= 3 && !GENERIC.has(norm(k)) && !/[\u4e00-\u9fff]/.test(k))
   .map(k => ({ k: norm(k), f })))
   .sort((a, b) => b.k.length - a.k.length);
 
