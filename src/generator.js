@@ -15,108 +15,13 @@ const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;',
 const mb = n => (n / 1024 / 1024).toFixed(1) + ' MB';
 const tick = () => new Promise(r => setTimeout(r, 30));  // 让进度文字先画出来
 
-let file = null, bytes = null, format = '', fx = null, graph = null, kinds = [], aiNote = '', texInfo = [];
+let file = null, bytes = null, format = '', fx = null, graph = null, kinds = [], texInfo = [];
 
 // ---------- 说明 ----------
 $('openGuide').onclick = () => $('guide').showModal();
 document.querySelectorAll('[data-guide]').forEach(b => b.onclick = () => $('guide').showModal());
 $('closeGuide').onclick = () => $('guide').close();
 $('guide').onclick = e => e.target === $('guide') && $('guide').close();
-
-// ---------- AI 助手：用户自己的 OpenAI 格式接口，设置只存在本机浏览器 ----------
-const AI_KEY = 'stage-generator-ai';
-let ai = {};
-try { ai = JSON.parse(localStorage.getItem(AI_KEY)) || {}; } catch {}
-const aiReady = () => ai.base && ai.key && ai.model;
-const showAiState = () => {
-  $('aiState').textContent = aiReady() ? `已设置 · ${ai.model}` : '未设置';
-  $('aiState').classList.toggle('on', !!aiReady());
-};
-showAiState();
-$('openAi').onclick = () => {
-  $('aiBase').value = ai.base || ''; $('aiKey').value = ai.key || ''; $('aiModel').value = ai.model || '';
-  $('aiMsg').innerHTML = '';
-  $('ai').showModal();
-};
-$('closeAi').onclick = () => $('ai').close();
-const aiForm = () => ({ base: ($('aiBase').value.trim() || 'https://api.openai.com/v1').replace(/\/+$/, ''), key: $('aiKey').value.trim(), model: $('aiModel').value.trim() });
-const aiSay = (cls, t) => $('aiMsg').innerHTML = `<div class="msg ${cls}">${t}</div>`;
-$('aiSave').onclick = () => {
-  const f = aiForm();
-  if (!f.key || !f.model) return aiSay('warn', '请填 API Key 和模型名');
-  ai = f;
-  try { localStorage.setItem(AI_KEY, JSON.stringify(ai)); } catch {}
-  showAiState();
-  renderKinds();
-  aiSay('ok', '已保存');
-};
-$('aiClear').onclick = () => {
-  ai = {};
-  try { localStorage.removeItem(AI_KEY); } catch {}
-  $('aiBase').value = $('aiKey').value = $('aiModel').value = '';
-  showAiState();
-  renderKinds();
-  aiSay('ok', '已清除');
-};
-$('aiTest').onclick = async () => {
-  const f = aiForm();
-  if (!f.key || !f.model) return aiSay('warn', '请填 API Key 和模型名');
-  aiSay('', '连接中…');
-  try {
-    await chat(f, [{ role: 'user', content: '回复 OK' }], 5);
-    aiSay('ok', '✓ 连接成功');
-  } catch (e) { aiSay('bad', esc(e.message)); }
-};
-
-async function chat({ base, key, model }, messages, maxTokens) {
-  let res;
-  try {
-    res = await fetch(base + '/chat/completions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + key },
-      body: JSON.stringify({ model, messages, temperature: 0, ...(maxTokens && { max_tokens: maxTokens }) }),
-    });
-  } catch {
-    throw new Error('连不上接口。检查地址是否正确；有的服务不允许网页直接调用（跨域限制），可以换一个服务商，或填自己的代理地址。');
-  }
-  const body = await res.text();
-  if (!res.ok) {
-    let m = body;
-    try { m = JSON.parse(body).error?.message || body; } catch {}
-    throw new Error(`接口返回错误 ${res.status}：${m.slice(0, 300)}`);
-  }
-  const text = JSON.parse(body).choices?.[0]?.message?.content;
-  if (typeof text !== 'string') throw new Error('接口返回的格式不是 OpenAI 格式');
-  return text;
-}
-
-// 让 AI 给没认出的型号建议用途。只发名字、数量、部件数、所在组名和包含关系
-const ROLE_NAMES = Object.fromEntries(ROLES.flatMap(([v, l]) => Array.isArray(l) ? l : [[v, l]]));
-async function askAi() {
-  const todo = kinds.filter(k => !k.known);
-  const lines = todo.map(k => {
-    const groups = Object.entries(k.groups).sort((a, b) => b[1] - a[1]).slice(0, 6).map(([g, n]) => `${g}×${n}`).join('、');
-    const inner = Object.entries(k.contains).map(([c, n]) => `${n} 个 ${kinds.find(x => x.id === c)?.name}`).join('、');
-    return `${k.id}：名字「${k.name}」，${k.count} 个，每个 ${k.parts} 个部件，所在的组：${groups}${inner ? `；是一个整体，里面有 ${inner}` : ''}`;
-  }).join('\n');
-  const roles = Object.entries(ROLE_NAMES).filter(([v]) => v).map(([v, l]) => `${v}（${l}）`).join('、');
-  const messages = [
-    { role: 'system', content: '你是舞台美术和灯光设计助手。用户的 3ds Max 舞美模型里自动找到了一些重复出现的对象，请判断每种是什么。' },
-    { role: 'user', content: `可选用途：${roles}；不是灯具也不是桌椅（舞台结构、桁架、装饰、屏幕模块，或者由多台灯/多把椅子组成的整体）填空字符串 ""。\n` +
-      `组名常常说明了灯的用途，比如「beam」是光束灯、「闪」是频闪、「条」是灯条、「染色」「wash」是染色灯。拿不准就填 ""。\n\n${lines}\n\n` +
-      '只输出一个 JSON 对象，不要其他文字，格式：{"K1": {"role": "beam", "reason": "一句话理由"}, ...}' },
-  ];
-  for (let attempt = 0; attempt < 2; attempt++) {
-    const text = await chat(ai, messages);
-    try {
-      const j = JSON.parse(text.slice(text.indexOf('{'), text.lastIndexOf('}') + 1));
-      return Object.fromEntries(todo.filter(k => j[k.id] && (j[k.id].role === '' || j[k.id].role in ROLE_NAMES)).map(k => [k.id, j[k.id]]));
-    } catch {
-      messages.push({ role: 'assistant', content: text }, { role: 'user', content: '格式不对，只输出那个 JSON 对象。' });
-    }
-  }
-  throw new Error('AI 没有按格式回答，请再试一次或换一个模型');
-}
 
 // ---------- 1. 选择模型 ----------
 const drop = $('drop');
@@ -151,7 +56,6 @@ async function load(f) {
   }
   fx = graph = null;
   kinds = [];
-  aiNote = '';
   texInfo = [];
   let note = '';
   if (format === 'fbx') {
@@ -198,8 +102,7 @@ function row(k) {
   const what = k.contains && Object.keys(k.contains).length
     ? `<div class="k">一个整体，里面有 ${Object.entries(k.contains).map(([c, n]) => `${n} 个 ${esc(kinds.find(x => x.id === c)?.name || c)}`).join('、')}</div>`
     : `<div class="k">每个 ${k.parts} 个部件</div>`;
-  const why = k.why ? `<div class="why">🤖 ${esc(k.why)}</div>` : '';
-  return `<tr><td><b>${esc(k.name)}</b>${k.known ? '<span class="tag">已认出</span>' : ''}${what}${why}</td>
+  return `<tr><td><b>${esc(k.name)}</b>${k.known ? '<span class="tag">已认出</span>' : ''}${what}</td>
     <td class="num">${k.count} 个</td><td class="where"><span class="k">${where}${more}</span></td><td class="role">${roleSelect(k)}</td></tr>`;
 }
 function renderKinds() {
@@ -209,28 +112,11 @@ function renderKinds() {
   // 「整体」（一整排灯架、一套桌椅）一般不用管，收起来
   const main = kinds.filter(k => !Object.keys(k.contains).length), groups = kinds.filter(k => Object.keys(k.contains).length);
   const head = '<thead><tr><th>型号</th><th>数量</th><th>在哪些组里</th><th style="width:150px">用途</th></tr></thead>';
-  const known = kinds.filter(k => k.known).length, unknown = main.filter(k => !k.known).length;
+  const known = kinds.filter(k => k.known).length;
   box.innerHTML = `<div class="msg ${known === main.length ? 'ok' : ''}">找到 ${main.length} 种，已自动认出 ${known} 种${known < main.length ? '，其余请选一下用途' : ''}。</div>
-    ${unknown ? `<div class="ai-box"><div class="txt"><b>🤖 有 ${unknown} 种没认出来，可以让 AI 帮你判断</b>
-      <span class="hint">${aiNote || (aiReady() ? `用你设置的 ${esc(ai.model)}，只发送型号名字、数量和分组名，不发送模型` : '用你自己的 AI 服务（OpenAI 格式的 API），设置一次就行。也可以不用 AI，直接在下面的下拉框里选。')}</span></div>
-      <button class="go" id="askAi">${aiReady() ? '让 AI 判断' : '设置 AI 助手'}</button></div>` : ''}
     <table class="kinds">${head}<tbody>${main.map(row).join('')}</tbody></table>
     ${groups.length ? `<details><summary>另有 ${groups.length} 种「整体」（灯架、成套桌椅等，一般不用管）</summary>
       <table class="kinds">${head}<tbody>${groups.map(row).join('')}</tbody></table></details>` : ''}`;
-  const btn = $('askAi');
-  if (btn) btn.onclick = async () => {
-    if (!aiReady()) return $('openAi').click();
-    btn.disabled = true;
-    btn.textContent = 'AI 正在判断…';
-    try {
-      const got = await askAi();
-      for (const [id, { role, reason }] of Object.entries(got)) Object.assign(kinds.find(k => k.id === id), { role, why: `${ROLE_NAMES[role]}：${reason || ''}` });
-      aiNote = `<span style="color:var(--ok)">AI 给出了 ${Object.keys(got).length} 种的建议（表格里 🤖 标着理由），请检查一下，不对可以改</span>`;
-    } catch (e) {
-      aiNote = `<span style="color:var(--bad)">${esc(e.message)}</span>`;
-    }
-    renderKinds();
-  };
   box.querySelectorAll('select').forEach(s => s.onchange = () => {
     kinds.find(k => k.id === s.dataset.k).role = s.value;
     s.classList.toggle('set', !!s.value);
@@ -292,7 +178,7 @@ $('go').onclick = async () => {
     stepState(4, 'done');
   } catch (e) {
     await say('');
-    $('result').innerHTML = `<div class="msg bad">生成失败：${esc(e.message)}</div>`;
+    $('result').innerHTML = `<div class="msg bad">生成失败：${esc(e.message)}<br>请把这段提示和模型大小发到 <a href="mailto:stageviewer.app@outlook.com">stageviewer.app@outlook.com</a>，我们来看。</div>`;
   } finally {
     go.disabled = false;
   }

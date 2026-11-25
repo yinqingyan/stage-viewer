@@ -2679,6 +2679,8 @@ class AnimationParser {
 									// if the animated model is pre rotated, we'll have to apply the pre rotations to every
 									// animation value as well
 									if ( 'PreRotation' in rawModel ) node.preRotation = rawModel.PreRotation.value;
+									// 补丁：只有部分轴有旋转曲线时（如只绕竖轴转），缺的轴用模型本身的静态角度补齐
+									if ( 'Lcl_Rotation' in rawModel ) node.lclRotation = rawModel.Lcl_Rotation.value;
 									if ( 'PostRotation' in rawModel ) node.postRotation = rawModel.PostRotation.value;
 
 									layerCurveNodes[ i ] = node;
@@ -2808,7 +2810,7 @@ class AnimationParser {
 
 		if ( rawTracks.R !== undefined && Object.keys( rawTracks.R.curves ).length > 0 ) {
 
-			const rotationTrack = this.generateRotationTrack( rawTracks.modelName, rawTracks.R.curves, rawTracks.preRotation, rawTracks.postRotation, rawTracks.eulerOrder );
+			const rotationTrack = this.generateRotationTrack( rawTracks.modelName, fillRotationCurves( rawTracks.R.curves, rawTracks.lclRotation ), rawTracks.preRotation, rawTracks.postRotation, rawTracks.eulerOrder );
 			if ( rotationTrack !== undefined ) tracks.push( rotationTrack );
 
 		}
@@ -4058,6 +4060,22 @@ class FBXTree {
 }
 
 // ************** UTILITY FUNCTIONS **************
+
+// 补丁：three.js 只在 x、y、z 三条旋转曲线都在时才生成旋转动画（否则返回一个空的占位轨道）。
+// Blender 等导出时会省略没变化的轴；这里按已有曲线的时间点，给缺的轴补一条恒定曲线（值 = 静态角度，单位度）
+function fillRotationCurves( curves, lcl = [ 0, 0, 0 ] ) {
+
+	const axes = [ 'x', 'y', 'z' ], have = axes.filter( a => curves[ a ] !== undefined );
+	if ( have.length === 0 || have.length === 3 ) return curves;
+	const times = curves[ have[ 0 ] ].times, out = { ...curves };
+	axes.forEach( ( a, i ) => {
+
+		if ( out[ a ] === undefined ) out[ a ] = { times, values: new Float32Array( times.length ).fill( lcl[ i ] ) };
+
+	} );
+	return out;
+
+}
 
 function isFbxFormatBinary( buffer ) {
 

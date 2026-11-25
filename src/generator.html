@@ -33,8 +33,6 @@
   .top-links { display:flex; justify-content:center; flex-wrap:wrap; gap:10px; margin-top:18px; }
   .pill { display:inline-flex; align-items:center; gap:8px; padding:9px 16px; background:rgba(255,255,255,.04); color:var(--text); border:1px solid var(--line2); border-radius:999px; font:inherit; cursor:pointer; backdrop-filter:blur(8px); transition:border-color .2s, background .2s; }
   .pill:hover { border-color:var(--accent); background:rgba(123,140,255,.1); }
-  .state { padding:1px 9px; border-radius:999px; background:rgba(255,255,255,.08); color:var(--dim); font-size:12px; }
-  .state.on { background:rgba(70,211,154,.15); color:var(--ok); }
   a, .link { color:#a9b5ff; cursor:pointer; text-decoration:none; background:none; border:0; padding:0; font:inherit; }
   .link:hover { text-decoration:underline; }
 
@@ -64,14 +62,8 @@
   th, td { padding:10px 6px; border-bottom:1px solid var(--line); text-align:left; vertical-align:middle; }
   th { color:var(--dim); font-weight:normal; font-size:12px; letter-spacing:.05em; }
   td .k { color:var(--dim); font-size:12px; }
-  td .why { color:#a9b5ff; font-size:12px; }
   td.num { white-space:nowrap; font-variant-numeric:tabular-nums; }
   .tag { margin-left:6px; padding:1px 7px; border-radius:999px; background:rgba(70,211,154,.14); color:var(--ok); font-size:11px; white-space:nowrap; }
-  .ai-box { display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-top:12px; padding:14px 16px; border-radius:14px; border:1px solid rgba(123,140,255,.35);
-            background:linear-gradient(135deg, rgba(123,140,255,.12), rgba(176,124,255,.08)); }
-  .ai-box .txt { flex:1; min-width:220px; }
-  .ai-box .txt b { display:block; }
-  .ai-box .go { margin:0; padding:9px 18px; font-size:14px; }
   select, input[type=text], input[type=password] { width:100%; padding:9px 10px; background:#0f1116; color:var(--text); border:1px solid var(--line2); border-radius:10px; font:inherit; transition:border-color .2s; }
   select:focus, input:focus { outline:none; border-color:var(--accent); }
   select.set { border-color:rgba(123,140,255,.6); }
@@ -86,7 +78,7 @@
   .sides label:has(input:checked) { border-color:var(--accent); background:rgba(123,140,255,.12); box-shadow:0 0 0 3px rgba(123,140,255,.12); }
   .sides small { display:block; color:var(--dim); font-weight:normal; }
 
-  /* 即将支持：升降、开合 */
+  /* 机械：升降、开合（测试版） */
   .soon { margin-top:18px; padding:20px 24px; border-radius:18px; border:1px dashed rgba(255,210,138,.3); background:linear-gradient(135deg, rgba(255,210,138,.06), transparent 60%); }
   .soon h3 { display:flex; align-items:center; flex-wrap:wrap; gap:10px; margin:0 0 6px; font-size:16px; }
   .soon .badge { padding:2px 10px; border-radius:999px; background:rgba(255,210,138,.15); color:var(--gold); font-size:12px; font-weight:normal; }
@@ -101,6 +93,7 @@
   #outName { color:var(--text); }
   #progress { margin-top:12px; color:var(--dim); white-space:pre-line; font-variant-numeric:tabular-nums; }
   #result a.dl { display:inline-block; margin-top:8px; padding:12px 22px; background:var(--ok); color:#06150e; border-radius:12px; font-weight:700; box-shadow:0 10px 30px -10px rgba(70,211,154,.7); }
+  .contact { margin:14px 0 0; color:var(--dim); font-size:13px; }
   footer { margin-top:40px; text-align:center; color:#5d6372; font-size:12px; }
 
   dialog { max-width:760px; width:calc(100% - 32px); max-height:calc(100% - 48px); padding:0; background:var(--card2); color:var(--text); border:1px solid var(--line2); border-radius:18px; }
@@ -136,8 +129,8 @@
   <span class="safe">✓ 模型只在你的电脑上处理，不会上传到任何地方</span>
   <div class="top-links">
     <button class="pill" id="openGuide">📖 模型准备说明</button>
-    <button class="pill" id="openAi">🤖 AI 助手 <span class="state" id="aiState">未设置</span></button>
   </div>
+  <p class="contact">有问题直接联系：<a href="mailto:stageviewer.app@outlook.com">stageviewer.app@outlook.com</a></p>
 </header>
 
 <main>
@@ -182,15 +175,14 @@
   </section>
 
   <aside class="soon">
-    <h3>升降台 · 升降屏 · 开合屏 · 旋转台 <span class="badge">即将支持</span></h3>
-    <p>现在生成的网页里，这些机械还不能动，会停在模型里的位置。</p>
-    <p>现在就可以在 3ds Max 里准备好，功能上线后不用改模型：</p>
+    <h3>升降台 · 升降屏 · 开合屏 · 旋转台 <span class="badge">测试版</span></h3>
+    <p>在 3ds Max 里给会动的东西做好关键帧动画，生成的网页右侧会出现「机械」面板，每个部件一个滑块，可以在起点和终点之间拖动或播放。</p>
     <ol>
-      <li>一起动的东西编成一个组（开合屏的左右两半各一组），起个好懂的名字，比如「主屏-左」。</li>
-      <li>第 0 帧放在初始位置，最后一帧放到运动到头的位置。</li>
+      <li>一起动的东西编成一个组（开合屏的左右两半各一组），起个好懂的名字，比如「主屏-左」，这个名字会显示在面板上。</li>
+      <li>动画打在组上：第 0 帧放在初始位置，最后一帧放到运动到头的位置。</li>
       <li>导出 FBX 时勾选「动画」和「烘焙动画」。</li>
     </ol>
-    <p>上线后网页会自动认出它们，按运动方向生成升降、开合、旋转的控制滑块。<button class="link" data-guide>详细做法见模型准备说明 →</button></p>
+    <p>网页按运动方向自动判断：上下动是升降，水平动是平移（开合），转动是旋转。目前用 Blender 做的模型测试通过，3ds Max 导出的模型还在验证，遇到不动或动得不对请反馈。<button class="link" data-guide>详细做法见模型准备说明 →</button></p>
   </aside>
 
   <section class="step off" id="s4">
@@ -201,29 +193,8 @@
     <div id="result"></div>
   </section>
 
-  <footer>免费开源 · <a href="https://github.com/yinqingyan/stage-viewer">GitHub</a></footer>
+  <footer>有问题直接联系 <a href="mailto:stageviewer.app@outlook.com">stageviewer.app@outlook.com</a> · 免费开源 · <a href="https://github.com/yinqingyan/stage-viewer">GitHub</a></footer>
 </main>
-
-<dialog id="ai">
-  <div class="close"><button id="closeAi">关闭</button></div>
-  <div class="guide">
-    <h2 style="border:0;padding-top:0;margin-top:0">AI 助手</h2>
-    <p class="hint">可选。填上你自己的 AI 服务（OpenAI 格式的接口），生成时可以让它帮忙判断没认出的灯具桌椅。<br>
-      只会发送型号名字、数量和分组名，<b>不会发送模型</b>。这些设置只保存在这台电脑的浏览器里。</p>
-    <label class="field">接口地址 <span class="hint">OpenAI、OpenRouter、DeepSeek 等兼容 OpenAI 格式的服务都可以</span>
-      <input type="text" id="aiBase" placeholder="https://api.openai.com/v1"></label>
-    <label class="field">API Key
-      <input type="password" id="aiKey" placeholder="sk-…" autocomplete="off"></label>
-    <label class="field">模型名
-      <input type="text" id="aiModel" placeholder="比如 gpt-4o-mini、deepseek-chat"></label>
-    <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <button class="go" id="aiSave">保存</button>
-      <button class="go plain" id="aiTest">测试连接</button>
-      <button class="go plain" id="aiClear">清除</button>
-    </div>
-    <div id="aiMsg"></div>
-  </div>
-</dialog>
 
 <dialog id="guide">
   <div class="close"><button id="closeGuide">关闭</button></div>

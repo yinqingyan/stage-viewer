@@ -9,6 +9,7 @@ import { buildLights } from './lights.js';
 import { setupCameras } from './cameras.js';
 import { setupDirector } from './director.js';
 import { setupShow } from './show.js';
+import { setupMachines, KINDS } from './machines.js';
 
 // 构建脚本把模型和配置注入为 window.STAGE = { model: { format, gzip, data }, config }
 const STAGE = window.STAGE || {};
@@ -97,9 +98,17 @@ function onLoad(root) {
   model.traverse(o => (o.isLight || o.isCamera) && extras.push(o));
   extras.forEach(o => o.removeFromParent());
   model.updateMatrixWorld(true);
+  // 模型里的关键帧动画 = 升降、开合、旋转的机械，先摆到第一帧，再算尺寸、座位等
+  machines = setupMachines(model, model.animations, { onSettle: () => { lights?.fit(); captureReflection(); } });
+  if (location.hash === '#debug') window.STAGE_DEBUG = { model, machines };  // 测试脚本用
   buildProps(model, CFG.props);
-  // 落地并水平居中：舞台面在 y=0 附近，中心在原点
-  box = new THREE.Box3().setFromObject(model);
+  // 落地并水平居中：舞台面在 y=0 附近，中心在原点。
+  // 机械不参与（升降台起点常在台面以下，算进去会把整个舞台抬高）
+  const movers = new Set(machines.list.map(m => m.node));
+  const isMover = o => { for (let p = o; p; p = p.parent) if (movers.has(p)) return true; return false; };
+  box = new THREE.Box3();
+  model.traverse(o => o.isMesh && !isMover(o) && box.expandByObject(o));
+  if (box.isEmpty()) box.setFromObject(model);
   center = box.getCenter(new THREE.Vector3());
   model.position.set(-center.x, -box.min.y, -center.z);
   scene.add(model);
@@ -166,6 +175,7 @@ function onLoad(root) {
     `${size.x.toFixed(1)} × ${size.z.toFixed(1)} × ${size.y.toFixed(1)} m`;
   document.getElementById('loading').remove();
   setupLifts();
+  setupMachinesPanel();
   CFG.labels.forEach(addLabel);
   CFG.textures.forEach(replaceTexture);
   const aim = CFG.aim && { floorBelow: CFG.aim.floorBelow ?? 3, forward: audienceDir() };
@@ -203,6 +213,7 @@ async function loadModel({ format, gzip, data }) {
     return root;
   }
   const gltf = await new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).parseAsync(buf, '');
+  gltf.scene.animations = gltf.animations;
   return gltf.scene;
 }
 
@@ -482,6 +493,28 @@ function setupLifts() {
   document.getElementById('lifts').hidden = !lifts.length;
 }
 
+// 机械面板：每个会动的部件一行，滑块 0 = 起点（第一帧）、1 = 终点（最后一帧）
+function setupMachinesPanel() {
+  const sec = document.getElementById('machines'), body = sec.querySelector('.sec-body');
+  if (!machines.list.length) return;
+  sec.hidden = false;
+  body.innerHTML = '<div class="lg-all"><button data-all="0">全部到起点</button><button data-all="1">全部到终点</button></div>';
+  for (const m of machines.list) {
+    const row = document.createElement('div');
+    row.className = 'lift';
+    row.innerHTML = `<div class="lift-head"><span></span><span class="k">${KINDS[m.kind]} · ${m.detail}</span></div>
+      <div class="lift-ctl"><button data-to="0">起点</button><input type="range" min="0" max="1" step="any" value="0"><button data-to="1">终点</button></div>`;
+    row.querySelector('span').textContent = m.name.replace(/_/g, ' ');
+    const slider = row.querySelector('input');
+    slider.oninput = () => machines.set(m, +slider.value);
+    slider.onchange = () => { lights?.fit(); captureReflection(); };
+    m.onMove = t => slider.value = t;
+    row.querySelectorAll('[data-to]').forEach(b => b.onclick = () => machines.go(m, +b.dataset.to));
+    body.append(row);
+  }
+  body.querySelectorAll('[data-all]').forEach(b => b.onclick = () => machines.list.forEach(m => machines.go(m, +b.dataset.all)));
+}
+
 // ---------- 灯光分组开关 ----------
 function setupLights({ groups, setOn, setBeam, setStars, setLevel }) {
   const sec = document.getElementById('lights'), body = sec.querySelector('.sec-body');
@@ -530,7 +563,7 @@ document.querySelectorAll('#side section').forEach(sec => {
   if (matchMedia('(max-width:600px)').matches) sec.classList.add('closed');
 });
 
-let lights = null, cams = null, dp = null, show = null;
+let lights = null, cams = null, dp = null, show = null, machines = null;
 // 新机位默认对准舞台前区：屏幕中心往观众方向 6 米、台面以上 1.5 米（人胸口高度）；没有屏幕就用模型中心
 function stageFront() {
   const b = new THREE.Box3();
@@ -789,6 +822,7 @@ renderer.setAnimationLoop(now => {
     if (tween.t === 1) tween = null;
   }
   updateLifts(dt);
+  machines?.update(dt);
   cams?.tick(dt);
   if (walk.on) updateWalk(dt);
   else {
