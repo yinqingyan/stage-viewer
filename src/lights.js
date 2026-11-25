@@ -6,6 +6,7 @@ import * as THREE from 'three';
 //     lens: 灯口中心, dir: 出光方向, size: 圆形灯口半径 或 [宽, 高]（strobe、bar 的长方形发光面） }
 // 灯具按所在的最外层组分组，每组一个开关。
 // 生成器认出的新型号还没分析灯口：没有 part 时用灯具节点本身，lens 默认节点原点，dir 默认 +Z，size 用下面的默认大小（米）。
+// 设计师选了具体型号时，配置里带 sizeM（灯口半径或 [宽, 高]，米）和 angle（光束角，度），覆盖默认值。
 // 配置 aim（可选）统一光束方向、不用模型里灯头的姿态：灯口离地低于 floorBelow 米的朝正上方，其余朝观众席水平打出。
 // 频闪只有面板发光，始终按面板自身朝向。
 // 配置 lightGroups（可选）按组名单独设置，"*" 对所有组生效：
@@ -14,10 +15,11 @@ import * as THREE from 'three';
 // 每个灯口另有一颗始终正对镜头的星芒（星光镜效果），可整体开关。
 
 export const TYPES = {
-  beam:   { label: '光束灯', angle: 3,  length: 40, intensity: 0.28,  size: 0.1 },  // 窄、清晰的光柱
-  wash:   { label: '染色灯', angle: 18, length: 25, intensity: 0.08,  size: 0.15 },  // 宽、柔
-  strobe: { label: '频闪',   angle: 60, length: 3,  intensity: 0.10,  size: [0.4, 0.2] },  // 发光面板，光很快散开
-  bar:    { label: '灯条',   angle: 6,  length: 8,  intensity: 0.035, size: [1, 0.05] },  // 一排灯珠形成的扇形光片
+  // 默认光束角、灯口大小按主流灯具的规格定（见 docs/灯具资料.md 第 5 节）
+  beam:   { label: '光束灯', angle: 3,  length: 40, intensity: 0.28,  size: 0.075 },  // 窄、清晰的光柱；灯口约 Ø150 mm
+  wash:   { label: '染色灯', angle: 20, length: 25, intensity: 0.08,  size: 0.13 },   // 宽、柔；常用 20° 左右
+  strobe: { label: '频闪',   angle: 60, length: 3,  intensity: 0.10,  size: [0.36, 0.12] },  // 发光面板（如 GLP JDC1 约 390×150 mm），光很快散开
+  bar:    { label: '灯条',   angle: 25, length: 8,  intensity: 0.035, size: [1, 0.08] },  // 1 米长灯条，扇形光片
 };
 const MAX_HIT = 60;   // 光束最远找多远的落点（米）
 const MIN_HIT = 0.8;  // 忽略灯口附近的命中（灯具挂在桁架里，射线会先碰到桁架）
@@ -145,7 +147,7 @@ export function buildLights(scene, root, fixtures = [], obstacles = [], aim = nu
       const g = groups.get(top) || new Map();
       groups.set(top, g);
       if (!g.has(f.type)) g.set(f.type, []);
-      g.get(f.type).push({ f, pos, dir, quat, s: scale.x });
+      g.get(f.type).push({ f, pos, dir, quat, s: scale.x, tan: f.angle && Math.tan(THREE.MathUtils.degToRad(f.angle / 2)) });
     }
   }
 
@@ -164,7 +166,7 @@ export function buildLights(scene, root, fixtures = [], obstacles = [], aim = nu
       const spots = new THREE.InstancedMesh(spotGeo, spotMat, list.length);
       const halos = new THREE.InstancedMesh(spotGeo, haloMat, list.length);
       list.forEach((l, i) => {
-        const sz = l.f.size ?? T.size, s = l.f.size == null ? 1 : l.s;  // 默认大小已经是米
+        const sz = l.f.sizeM ?? l.f.size ?? T.size, s = l.f.sizeM == null && l.f.size != null ? l.s : 1;  // sizeM 和默认大小已经是米
         const size = Array.isArray(sz) ? sz.map(v => v * s) : [sz * s, sz * s];
         // 灯口：圆片/矩形法线（+Z）对准出光方向；矩形沿灯口部件自身的 x、y 轴
         const lq = rect ? l.quat : Q.setFromUnitVectors(new THREE.Vector3(0, 0, 1), l.dir).clone();
@@ -227,7 +229,7 @@ export function buildLights(scene, root, fixtures = [], obstacles = [], aim = nu
         // 没有落点的光束（如打向天空）画到 1.5 倍标称长度，靠衰减自然消失
         const L = type === 'strobe' ? T.length : hit ? hit.distance + MIN_HIT : T.length * 1.5;
         len[i] = L;
-        r1[i] = r0[i] + L * tan;
+        r1[i] = r0[i] + L * (l.tan || tan);  // 选了具体型号的用它自己的光束角
         if (hit && spotted) {
           const n = hit.face ? hit.face.normal.clone().transformDirection(hit.object.matrixWorld) : up;
           spots.setMatrixAt(si++, M.compose(hit.point.clone().addScaledVector(n, 0.02), Q.setFromUnitVectors(new THREE.Vector3(0, 0, 1), n), new THREE.Vector3(r1[i], r1[i], 1)));

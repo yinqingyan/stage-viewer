@@ -213,6 +213,11 @@ def library_entry(kind, lib):
     return None
 
 
+def sane(n):
+    """three.js 读 FBX 时把名字里的空白换成 _、去掉 [ ] . : /；配置里的正则按处理后的名字写"""
+    return re.sub(r'[\[\]\.:/]', '', re.sub(r'\s', '_', n))
+
+
 def make_config(kinds, objs, parent):
     """按填了用途的型号生成配置里的 fixtures、props。
     查看器按名字正则找节点（取最外层匹配的；桌椅再按 parts 过滤），所以先试名字前缀，
@@ -228,7 +233,7 @@ def make_config(kinds, objs, parent):
     models = [m for m, o in objs.items() if o[0] == 'Model']
     def select(regex, parts):
         r = re.compile(regex)
-        hit = {m for m in models if r.search(objs[m][1])}
+        hit = {m for m in models if r.search(sane(objs[m][1]))}
         def under_hit(m):
             p = parent.get(m)
             while p is not None:
@@ -252,9 +257,9 @@ def make_config(kinds, objs, parent):
         e = dict(known) if known else {}
         parts = None if light else k['leaves']
         name = max(k['names'], key=k['names'].get)
-        regex = known['match'] if known else '^' + re.escape(name)
+        regex = known['match'] if known else '^' + re.escape(sane(name))
         if select(regex, parts) != set(k['ids']):
-            regex = '^(' + '|'.join(sorted({re.escape(objs[m][1]) for m in k['ids']})) + ')$'
+            regex = '^(' + '|'.join(sorted({re.escape(sane(objs[m][1])) for m in k['ids']})) + ')$'
             if select(regex, parts) != set(k['ids']):
                 notes.append(f"{k['id']}：节点名有重名，配置可能多选或漏选几个")
         e['match'] = regex

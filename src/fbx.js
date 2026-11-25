@@ -209,6 +209,10 @@ export function libraryEntry(kind, lib) {
 }
 export const roleOf = e => e ? e.type || e.shape : '';
 
+// three.js 读 FBX 时会把名字里的空白换成 _、去掉 [ ] . : /（PropertyBinding.sanitizeNodeName）。
+// 查看器按处理后的名字找节点，所以配置里的正则也按处理后的名字写（「LED PAR_01」→「LED_PAR_01」）
+const sane = n => n.replace(/\s/g, '_').replace(/[\[\]\.:\/]/g, '');
+
 // 按填了用途（role）的型号生成配置里的 fixtures、props。
 // 查看器按名字正则找节点（取最外层匹配的；桌椅再按 parts 过滤），先试名字前缀，
 // 选中的和这个型号不完全一致时（如名字都叫「组…」），改成逐个列出节点名。
@@ -221,7 +225,7 @@ export function makeConfig(kinds, { objs, parent }, lib) {
   };
   const models = [...objs].filter(([, o]) => o.kind === 'Model').map(([m]) => m);
   const select = (regex, parts) => {
-    const r = new RegExp(regex), hit = new Set(models.filter(m => r.test(objs.get(m).name)));
+    const r = new RegExp(regex), hit = new Set(models.filter(m => r.test(sane(objs.get(m).name))));
     const underHit = m => { for (let p = parent.get(m); p !== undefined; p = parent.get(p)) if (hit.has(p)) return true; return false; };
     return new Set([...hit].filter(m => !underHit(m) && (parts == null || leaf(m) === parts)));
   };
@@ -236,12 +240,13 @@ export function makeConfig(kinds, { objs, parent }, lib) {
     let known = libraryEntry(k, lib);
     if (known && roleOf(known) !== role) known = null;
     const e = { ...known }, parts = light ? null : k.leaves, ids = new Set(k.ids);
-    let regex = known ? known.match : '^' + esc(k.name);
+    let regex = known ? known.match : '^' + esc(sane(k.name));
     if (!same(select(regex, parts), ids)) {
-      regex = '^(' + [...new Set(k.ids.map(m => esc(objs.get(m).name)))].sort().join('|') + ')$';
+      regex = '^(' + [...new Set(k.ids.map(m => esc(sane(objs.get(m).name))))].sort().join('|') + ')$';
       if (!same(select(regex, parts), ids)) notes.push({ type: 'dup', id: k.id, name: k.name });  // 节点名有重名，可能多选或漏选几个
     }
     e.match = regex;
+    Object.assign(e, k.extra);  // 生成器里选了具体灯具型号：sizeM、angle
     if (light) { e.type = role; fixtures.push(e); }
     else { e.shape = role; e.parts = parts; props.push(e); }
     if (!known) notes.push({ type: 'unknown', id: k.id, name: k.name });  // 不在已知型号里，先按默认大小显示

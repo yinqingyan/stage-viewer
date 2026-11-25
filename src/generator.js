@@ -5,6 +5,7 @@
 import { Fbx, readGraph, detect, libraryEntry, roleOf, makeConfig, strip, textures } from './fbx.js';
 import LIB from '../skill/stage-viewer/scripts/library.json';
 import { mountExplainer } from './explainer.js';
+import { guess, FIXTURES, fixtureParams } from './guess.js';
 import { lang, setLang, L, translatePage, addWords } from './i18n.js';
 
 const MARK = '<script>/*__STAGE__*/</script>';
@@ -182,7 +183,14 @@ async function load(f) {
       fx = new Fbx(bytes);
       graph = readGraph(fx);
       kinds = detect(fx, graph);
-      for (const k of kinds) k.role = k.known = roleOf(libraryEntry(k, LIB));
+      for (const k of kinds) {
+        k.role = k.known = roleOf(libraryEntry(k, LIB));
+        k.model = null;
+        // 库里没有的，按名字猜：先看它自己的名字，再看所在的组名（数量多的先）。「整体」不猜，免得把整排桁架当成灯
+        if (k.known || Object.keys(k.contains).length) continue;
+        const g = guess([k.sample, k.name, ...Object.entries(k.groups).sort((a, b) => b[1] - a[1]).map(([n]) => n)]);
+        if (g) Object.assign(k, { role: g.role, guessed: g.word, model: g.fixture });
+      }
       texInfo = textures(fx);
     } catch (e) {
       fx = graph = null;
@@ -204,7 +212,16 @@ function roleSelect(k) {
   const opts = ROLES().map(([v, l]) => Array.isArray(l)
     ? `<optgroup label="${v}">${l.map(([v2, l2]) => `<option value="${v2}"${k.role === v2 ? ' selected' : ''}>${l2}</option>`).join('')}</optgroup>`
     : `<option value="${v}"${k.role === v ? ' selected' : ''}>${l}</option>`).join('');
-  return `<select data-k="${k.id}" class="${k.role ? 'set' : ''}">${opts}</select>`;
+  return `<select data-k="${k.id}" class="${k.role ? 'set' : ''}">${opts}</select>${modelSelect(k)}`;
+}
+// 没认出的灯选了用途后，可以再选具体型号：按真实规格画灯口大小和光束角（docs/fixtures-reference.json）
+const LIGHT_ROLES = ['beam', 'wash', 'strobe', 'bar'];
+function modelSelect(k) {
+  if (k.known || !LIGHT_ROLES.includes(k.role)) return '';
+  const list = FIXTURES.filter(f => f.role === k.role), brands = [...new Set(list.map(f => f.brand))];
+  const opts = brands.map(b => `<optgroup label="${esc(b)}">${list.filter(f => f.brand === b).map(f =>
+    `<option value="${f.i}"${k.model === f.i ? ' selected' : ''}>${esc(f.model)}</option>`).join('')}</optgroup>`).join('');
+  return `<select data-m="${k.id}" class="model ${k.model != null ? 'set' : ''}" translate="no"><option value="">${L('通用（默认大小）', 'Generic (default size)')}</option>${opts}</select>`;
 }
 function row(k) {
   const groups = Object.entries(k.groups).sort((a, b) => b[1] - a[1]);
@@ -213,7 +230,7 @@ function row(k) {
   const what = Object.keys(k.contains).length
     ? `<div class="k">${L('一个整体，里面有 ', 'A whole unit containing ')}${Object.entries(k.contains).map(([c, n]) => `${n} × ${user(kinds.find(x => x.id === c)?.name || c)}`).join(L('、', ', '))}</div>`
     : `<div class="k">${L(`每个 ${k.parts} 个部件`, `${k.parts} parts each`)}</div>`;
-  return `<tr><td><b translate="no">${esc(k.name)}</b>${k.known ? `<span class="tag">${L('已认出', 'Recognised')}</span>` : ''}${what}</td>
+  return `<tr><td><b translate="no">${esc(k.name)}</b>${k.known ? `<span class="tag">${L('已认出', 'Recognised')}</span>` : ''}${k.guessed && !k.known ? `<span class="tag guess">${L('按名字猜：', 'Guessed from name: ')}<span translate="no">${esc(k.guessed)}</span></span>` : ''}${what}</td>
     <td class="num">${k.count}${L(' 个', '')}</td><td class="where"><span class="k">${where}${more}</span></td><td class="role">${roleSelect(k)}</td></tr>`;
 }
 function renderKinds() {
@@ -223,16 +240,23 @@ function renderKinds() {
   if (!kinds.length) { box.innerHTML = `<div class="msg">${L('没有找到重复出现的灯具或桌椅，模型会原样显示。', 'No repeated lights or furniture found; the model is used as-is.')}</div>`; return; }
   // 「整体」（一整排灯架、一套桌椅）一般不用管，收起来
   const main = kinds.filter(k => !Object.keys(k.contains).length), groups = kinds.filter(k => Object.keys(k.contains).length);
-  const head = `<thead><tr><th>${L('型号', 'Type')}</th><th>${L('数量', 'Count')}</th><th>${L('在哪些组里', 'In groups')}</th><th style="width:150px">${L('用途', 'Role')}</th></tr></thead>`;
-  const known = kinds.filter(k => k.known).length;
-  box.innerHTML = `<div class="msg ${known === main.length ? 'ok' : ''}">${L(`找到 ${main.length} 种，已自动认出 ${known} 种${known < main.length ? '，其余请选一下用途' : ''}。`,
-      `Found ${main.length} type(s); ${known} recognised automatically${known < main.length ? ' — please choose a role for the rest' : ''}.`)}</div>
+  const head = `<thead><tr><th>${L('型号', 'Type')}</th><th>${L('数量', 'Count')}</th><th>${L('在哪些组里', 'In groups')}</th><th style="width:220px">${L('用途', 'Role')}</th></tr></thead>`;
+  const known = kinds.filter(k => k.known).length, guessed = main.filter(k => k.guessed && !k.known).length, left = main.length - known - guessed;
+  box.innerHTML = `<div class="msg ${!left ? 'ok' : ''}">${L(`找到 ${main.length} 种：已自动认出 ${known} 种${guessed ? `，按名字猜了 ${guessed} 种（请看一眼对不对）` : ''}${left > 0 ? `，其余 ${left} 种请选一下用途` : ''}。`,
+      `Found ${main.length} type(s): ${known} recognised${guessed ? `, ${guessed} guessed from names (please check)` : ''}${left > 0 ? `, ${left} left for you to choose` : ''}.`)}</div>
     <table class="kinds">${head}<tbody>${main.map(row).join('')}</tbody></table>
     ${groups.length ? `<details><summary>${L(`另有 ${groups.length} 种「整体」（灯架、成套桌椅等，一般不用管）`, `${groups.length} more “whole units” (rigs, table sets — usually leave these alone)`)}</summary>
       <table class="kinds">${head}<tbody>${groups.map(row).join('')}</tbody></table></details>` : ''}`;
-  box.querySelectorAll('select').forEach(s => s.onchange = () => {
-    kinds.find(k => k.id === s.dataset.k).role = s.value;
-    s.classList.toggle('set', !!s.value);
+  box.querySelectorAll('select[data-k]').forEach(s => s.onchange = () => {
+    const k = kinds.find(k => k.id === s.dataset.k);
+    k.role = s.value;
+    if (k.model != null && FIXTURES[k.model].role !== k.role) k.model = null;  // 换了用途，型号作废
+    k.guessed = null;
+    renderKinds();  // 型号下拉框跟着用途变
+  });
+  box.querySelectorAll('select[data-m]').forEach(s => s.onchange = () => {
+    kinds.find(k => k.id === s.dataset.m).model = s.value === '' ? null : +s.value;
+    s.classList.toggle('set', s.value !== '');
   });
 }
 
@@ -263,6 +287,7 @@ $('go').onclick = async () => {
     const config = { title, lang, audience: document.querySelector('input[name=side]:checked').value };
     let model = new Blob([bytes]), notes = [];
     const chosen = kinds.filter(k => k.role);
+    for (const k of chosen) k.extra = !k.known && k.model != null ? fixtureParams(FIXTURES[k.model]) : undefined;
     if (fx && chosen.length) {
       const n = chosen.reduce((s, k) => s + k.count, 0);
       await say(L(`精简 ${n} 个灯具和桌椅…`, `Simplifying ${n} lights and furniture…`));
