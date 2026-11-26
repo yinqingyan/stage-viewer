@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="color-scheme" content="dark">
-<title>舞美三维网页生成器</title>
+<title>3D 模型网页生成器</title>
 <style>
   :root {
     --bg:#07080c; --bg2:#0c0e14; --card:#10131b; --card2:#151924; --well:#0a0c12;
@@ -370,9 +370,9 @@
   <div class="beam b1"></div><div class="beam b2"></div><div class="beam b3"></div><div class="beam b4"></div><div class="floor"></div>
   <div class="wrap hero-in">
    <div class="hero-text">
-    <span class="eyebrow">STAGE · 3D · HTML</span>
-    <h1>舞美三维网页生成器</h1>
-    <p class="lead">把 3ds Max、C4D、SketchUp、Blender 等软件做的舞美模型变成一个 html 文件。双击就能在电脑、手机上三维浏览，走进观众席看舞台，发微信、邮件即可分享。</p>
+    <span class="eyebrow">ANY 3D MODEL · HTML</span>
+    <h1>3D 模型网页生成器</h1>
+    <p class="lead">把 3ds Max、C4D、SketchUp、Blender 等软件做的 3D 模型变成一个 html 文件，舞台、展台、建筑室内、产品都行。双击就能在电脑、手机上三维浏览、第一人称走进去看，发微信、邮件即可分享。</p>
     <div class="trust">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.5 4 5.5v6c0 5 3.4 8.6 8 10 4.6-1.4 8-5 8-10v-6z"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg>
       <div><b>模型只在你的电脑上处理，不会上传到任何地方</b><span>全程在浏览器里完成，免费开源</span></div>
@@ -398,7 +398,7 @@
 <main class="flow-wrap">
   <div class="flow-head sec-h">
     <span class="eyebrow">HOW IT WORKS</span>
-    <h2>三步，做出你的三维舞台</h2>
+    <h2>三步，把模型变成网页</h2>
   </div>
 
   <div class="flow">
@@ -406,7 +406,7 @@
     <!-- 第 2 步：只看，少选。按「要你选 → 猜的看一眼 → 已认出」排序，型号和整体收进「高级」 -->
     <section class="step off" id="s2">
       <h2><span class="n">2</span>看一眼认出的东西</h2>
-      <p class="hint">模型里重复出现的灯、椅子、音箱都列在下面，用途已经尽量帮你填好。猜的看一眼对不对，没认出的选一下；拿不准就留「不处理」，照原样显示也没问题。</p>
+      <p class="hint">模型里重复出现的灯、椅子、音箱都列在下面，用途已经尽量帮你填好。猜的看一眼对不对，没认出的选一下；拿不准就留「不处理」，照原样显示也没问题。不是舞台的模型，这一步什么都不用选。</p>
       <div id="kinds"></div>
       <details class="why">
         <summary>选了用途会怎样？</summary>
@@ -422,12 +422,12 @@
     <!-- 第 3 步：名字和观众席都有默认值，放在生成按钮旁边；#ready 说清楚现在能不能直接生成 -->
     <section class="step off" id="s3">
       <h2><span class="n">3</span>生成网页</h2>
-      <p class="hint">得到一个 html 文件，双击就能打开，发给导演和甲方。下面两项都已填好，不改也行。</p>
+      <p class="hint">得到一个 html 文件，双击就能打开，发给同事和甲方。下面两项都已填好，不改也行。</p>
       <div class="settings">
         <label class="field">项目名称 <span class="hint">网页标题和文件名</span>
           <input type="text" id="title" placeholder="比如：2027 春季发布会">
         </label>
-        <div class="field"><b>观众席在舞台的哪一侧</b><span class="hint">按建模软件里的前、后、左、右视图。打开后「观众席」视角要是看到舞台背面，换一侧重新生成。</span>
+        <div class="field"><b>正面（观众席）在哪一侧</b><span class="hint">按建模软件里的前、后、左、右视图。舞台选观众席那侧，其他模型选正面那侧。打开后「观众席」视角要是看到背面，换一侧重新生成。</span>
           <div class="sides">
             <label><input type="radio" name="side" value="+z" checked><i class="dia f"></i>前<small>前视图一侧</small></label>
             <label><input type="radio" name="side" value="-z"><i class="dia b"></i>后<small>后视图一侧</small></label>
@@ -436,10 +436,10 @@
           </div>
         </div>
       </div>
-      <!-- 单位：默认自动，只有生成出来舞台大小不对才需要打开 -->
+      <!-- 单位：默认自动，只有生成出来模型大小不对才需要打开 -->
       <details class="unit-fix">
-        <summary>生成的舞台太大或太小？</summary>
-        <label class="field">模型单位 <span class="hint">一般不用改。打开网页后右上角会写舞台的长宽高，和实际差了 10 倍、100 倍、1000 倍，就在这里选建模时用的单位，再生成一次。</span>
+        <summary>生成的模型太大或太小？</summary>
+        <label class="field">模型单位 <span class="hint">一般不用改。打开网页后右上角会写模型的长宽高，和实际差了 10 倍、100 倍、1000 倍，就在这里选建模时用的单位，再生成一次。</span>
           <select id="unit">
             <option value="">自动（按文件里记的）</option>
             <option value="0.001">毫米</option>
@@ -466,7 +466,7 @@
   <section class="prep sec-h" id="prep">
     <span class="eyebrow">BEFORE YOU EXPORT</span>
     <h2>导出模型前，做对这 4 件事</h2>
-    <p>做对了，生成的网页才有画面、认得出灯、会动。</p>
+    <p>前两条所有模型都要做对，贴图和尺寸才对；后两条只有舞台用得上，让网页认得出灯、会动。</p>
     <ol class="chk">
       <li><b>勾选「嵌入的媒体」</b>屏幕画面和贴图才会显示，不然是白模。</li>
       <li><b>格式选「二进制」，单位厘米或米</b>ASCII 格式认不出灯具；单位错了人会像蚂蚁或巨人。</li>

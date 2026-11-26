@@ -110,9 +110,9 @@ const html = () => `
 <!-- 结尾 -->
 <div class="ex-l" data-s="5" style="left:0;right:0;top:200px;text-align:center">
   <div style="display:flex;justify-content:center;align-items:center;gap:40px;font-size:30px">
-    <div class="ex-card" id="exFbx">${L('舞美.fbx', 'stage.fbx')}</div><div class="ex-gold" style="font-size:44px">→</div>
+    <div class="ex-card" id="exFbx">${L('模型.fbx', 'model.fbx')}</div><div class="ex-gold" style="font-size:44px">→</div>
     <div class="ex-card">${L('生成器', 'Generator')}</div><div class="ex-gold" style="font-size:44px">→</div>
-    <div class="ex-card ex-ok" id="exHtml">${L('舞美.html', 'stage.html')}</div>
+    <div class="ex-card ex-ok" id="exHtml">${L('模型.html', 'model.html')}</div>
   </div>
   <div style="font-size:40px;font-weight:800;margin-top:50px">${L('拖进生成器，下载 html，双击打开', 'Drop it in, download the html, double-click to open')}</div>
   <div class="ex-dim" style="font-size:24px;margin-top:22px">${L('有需求和建议？认识撒库拉的直接微信，不认识的发邮件：', 'Bugs or feature requests? Contact: ')}stageviewer.app@outlook.com</div>

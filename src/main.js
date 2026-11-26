@@ -18,7 +18,7 @@ import { setLang, translatePage, tr } from './i18n.js';
 // 构建脚本把模型和配置注入为 window.STAGE = { model: { format, gzip, data }, config }
 const STAGE = window.STAGE || {};
 const CFG = {
-  title: '',           // 项目名称，空 = 按语言用「舞美三维查看」/ Stage Viewer
+  title: '',           // 项目名称，空 = 按语言用「三维查看」/ Stage Viewer
   lang: 'zh',          // 界面语言：'zh' | 'en'（生成器按设计师当时用的语言写进来）
   audience: '+z',      // 观众席在模型的哪一侧：'+z' | '-z' | '+x' | '-x'
   lifts: [],           // 可选：升降屏，见 SKILL.md
@@ -38,7 +38,7 @@ const CFG = {
 // 英文界面：整页按 i18n.js 的词表翻译，之后各模块插进来的文字也会自动翻
 setLang(CFG.lang);
 if (CFG.lang === 'en') translatePage();
-CFG.title ||= CFG.lang === 'en' ? 'Stage Viewer' : '舞美三维查看';
+CFG.title ||= CFG.lang === 'en' ? 'Stage Viewer' : '三维查看';
 const AUDIENCE_SIDE = new URLSearchParams(location.search).get('audience') || CFG.audience;
 // 项目名：生成时的 title 是默认值，点右上角的名字可以改，存在本机。
 // 机位、走位的存储键仍用生成时的 title，改名不会丢数据

@@ -96,8 +96,8 @@ const PATTERNS = [
 // ---------- 查看器（生成的网页）----------
 const EN = {
   // 页面
-  '舞美三维查看': 'Stage Viewer',
-  '加载舞美模型…': 'Loading the stage model…',
+  '三维查看': 'Stage Viewer',
+  '加载模型…': 'Loading the model…',
   'WASD 飞行 · E/Q 升降 · Shift 加速': 'WASD fly · E/Q up/down · Shift faster',
   'WASD 移动 · 拖动转向 · Shift 加速 · 空格 跳 · C 坐下/站起 · Esc 退出': 'WASD move · drag to turn · Shift run · Space jump · C sit/stand · Esc exit',
   '页面里没有模型数据，请用 build_html.py 生成': 'This page has no model data. Create it with the generator.',

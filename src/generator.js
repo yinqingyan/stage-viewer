@@ -33,15 +33,15 @@ try { saved = localStorage.getItem(LANG_KEY); } catch {}
 setLang(new URLSearchParams(location.search).get('lang') || saved || (navigator.language.startsWith('zh') ? 'zh' : 'en'));
 addWords({
   // 顶栏、头图
-  '舞美三维网页生成器': 'Stage Viewer Generator', '模型准备说明': 'Model guide', '关闭': 'Close',
-  '把 3ds Max、C4D、SketchUp、Blender 等软件做的舞美模型变成一个 html 文件。双击就能在电脑、手机上三维浏览，走进观众席看舞台，发微信、邮件即可分享。':
-    'Turn a stage model from 3ds Max, C4D, SketchUp, Blender or similar into a single html file. Double-click to explore it in 3D on a computer or phone, walk into the audience and look at the stage, and share it by email or chat.',
+  '3D 模型网页生成器': '3D Model to Web Page', '模型准备说明': 'Model guide', '关闭': 'Close',
+  '把 3ds Max、C4D、SketchUp、Blender 等软件做的 3D 模型变成一个 html 文件，舞台、展台、建筑室内、产品都行。双击就能在电脑、手机上三维浏览、第一人称走进去看，发微信、邮件即可分享。':
+    'Turn any 3D model from 3ds Max, C4D, SketchUp, Blender or similar into a single html file: stages, exhibition booths, buildings, interiors, products. Double-click to explore it in 3D on a computer or phone, walk through it in first person, and share it by email or chat.',
   '模型只在你的电脑上处理，不会上传到任何地方': 'Your model is processed on your own computer and never uploaded',
   '全程在浏览器里完成，免费开源': 'Everything runs in your browser — free and open source',
   '第一次用？先看导出要求': 'First time? Read the export checklist',
   // 导出前
   '导出模型前，做对这 4 件事': 'Four things to get right before you export',
-  '做对了，生成的网页才有画面、认得出灯、会动。': 'Get these right and your stage shows its screens, recognises its lights and moves.',
+  '前两条所有模型都要做对，贴图和尺寸才对；后两条只有舞台用得上，让网页认得出灯、会动。': 'The first two apply to every model and get textures and size right; the last two only matter for stages, so the page recognises lights and moves machinery.',
   '勾选「嵌入的媒体」': 'Tick “Embed Media”', '屏幕画面和贴图才会显示，不然是白模。': 'Otherwise screen content and textures are missing and you get a plain white model.',
   '格式选「二进制」，单位厘米或米': 'Choose “Binary”, units in centimeters or meters',
   'ASCII 格式认不出灯具；单位错了人会像蚂蚁或巨人。': 'ASCII files cannot be scanned for lights; with wrong units people look like ants or giants.',
@@ -53,12 +53,12 @@ addWords({
   '看 30 秒动画': 'Watch the 30-second animation', '完整的模型准备说明 →': 'Full model preparation guide →',
   '30 秒动画，讲的就是上面 4 件事': 'The 30-second animation covers the same 4 points',
   // 三步
-  '三步，做出你的三维舞台': 'Three steps to your 3D stage',
+  '三步，把模型变成网页': 'Three steps from model to web page',
   '选择模型': 'Choose your model', '把模型文件拖到这里': 'Drop your model file here', '或点击选择文件': 'or click to choose a file',
   '只在本机读取，不会上传': 'Read locally, never uploaded',
   '看一眼认出的东西': 'Check what was found',
-  '模型里重复出现的灯、椅子、音箱都列在下面，用途已经尽量帮你填好。猜的看一眼对不对，没认出的选一下；拿不准就留「不处理」，照原样显示也没问题。':
-    'Every repeated light, chair and speaker in the model is listed below with its role filled in as far as possible. Glance at the guesses, pick a role for anything not recognised; if unsure leave it as “Leave as is” and it is shown exactly as modelled.',
+  '模型里重复出现的灯、椅子、音箱都列在下面，用途已经尽量帮你填好。猜的看一眼对不对，没认出的选一下；拿不准就留「不处理」，照原样显示也没问题。不是舞台的模型，这一步什么都不用选。':
+    'Every repeated light, chair and speaker in the model is listed below with its role filled in as far as possible. Glance at the guesses, pick a role for anything not recognised; if unsure leave it as “Leave as is” and it is shown exactly as modelled. If your model is not a stage, there is nothing to pick here.',
   '选了用途会怎样？': 'What does a role do?',
   '已认出': 'Recognised', '自己选用途': 'You pick the role', '不处理': 'Leave as is',
   '：这种东西会换成简单形状（灯口发光、光束、简单桌椅），文件小很多。灯口放在灯具中心、用默认大小，光束方向自动定（地上的灯朝上，天上的灯朝观众席），位置是近似的。':
@@ -66,17 +66,17 @@ addWords({
   '：不是灯具桌椅、或者拿不准的选这个。按模型原样显示，但不发光、没有灯光开关，文件也大一些。': ': for anything that is not a light or furniture, or when unsure. It is shown as modelled, but does not glow, has no light switch, and keeps the file larger.',
   '想让你常用的灯被自动认出？': 'Want your usual fixtures recognised automatically? ',
   '把一台灯的模型发给撒库拉（联系方式在页面最下面），我们加进库里。': 'Send one fixture model to us (contact at the bottom of the page) and we will add it to the library.',
-  '生成网页': 'Generate', '得到一个 html 文件，双击就能打开，发给导演和甲方。下面两项都已填好，不改也行。': 'You get one html file. Double-click to open it, then send it to the director or client. Both settings below are already filled in; change them only if you want to.',
+  '生成网页': 'Generate', '得到一个 html 文件，双击就能打开，发给同事和甲方。下面两项都已填好，不改也行。': 'You get one html file. Double-click to open it, then send it to your team or client. Both settings below are already filled in; change them only if you want to.',
   '项目名称': 'Project name', '网页标题和文件名': 'Page title and file name',
   '比如：2027 春季发布会': 'e.g. Spring Launch 2027',
-  '观众席在舞台的哪一侧': 'Which side is the audience on?',
-  '按建模软件里的前、后、左、右视图。打开后「观众席」视角要是看到舞台背面，换一侧重新生成。':
-    'As in your modelling software’s front / back / left / right views. If the audience view shows the back of the stage, pick another side and generate again.',
+  '正面（观众席）在哪一侧': 'Which side is the front (audience)?',
+  '按建模软件里的前、后、左、右视图。舞台选观众席那侧，其他模型选正面那侧。打开后「观众席」视角要是看到背面，换一侧重新生成。':
+    'As in your modelling software’s front / back / left / right views. For a stage pick the audience side; for anything else pick its front. If the audience view shows the back, pick another side and generate again.',
   '前': 'Front', '后': 'Back', '左': 'Left', '右': 'Right',
   '前视图一侧': 'Front view side', '后视图一侧': 'Back view side', '左视图一侧': 'Left view side', '右视图一侧': 'Right view side',
-  '生成的舞台太大或太小？': 'Stage too big or too small?', '模型单位': 'Model units',
-  '一般不用改。打开网页后右上角会写舞台的长宽高，和实际差了 10 倍、100 倍、1000 倍，就在这里选建模时用的单位，再生成一次。':
-    'Usually leave this alone. The page shows the stage size in the top-right corner; if it is off by 10×, 100× or 1000×, pick the units you modelled in and generate again.',
+  '生成的模型太大或太小？': 'Model too big or too small?', '模型单位': 'Model units',
+  '一般不用改。打开网页后右上角会写模型的长宽高，和实际差了 10 倍、100 倍、1000 倍，就在这里选建模时用的单位，再生成一次。':
+    'Usually leave this alone. The page shows the model size in the top-right corner; if it is off by 10×, 100× or 1000×, pick the units you modelled in and generate again.',
   '自动（按文件里记的）': 'Automatic (from the file)', '毫米': 'Millimetres', '厘米': 'Centimetres', '米': 'Metres', '英寸': 'Inches',
   '将导出：': 'Will save as:', '生成并下载': 'Generate and download',
   // 页脚
@@ -99,7 +99,7 @@ function renderLibNote() {
 }
 function applyLang(switched) {
   langBtn.textContent = lang === 'en' ? '中文' : 'English';
-  document.title = lang === 'en' ? 'Stage Viewer Generator' : '舞美三维网页生成器';
+  document.title = lang === 'en' ? '3D Model to Web Page' : '3D 模型网页生成器';
   translatePage();
   renderLibNote();
   renderInfo();
