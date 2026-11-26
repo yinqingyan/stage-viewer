@@ -123,7 +123,12 @@ function onLoad(root) {
   model.position.set(-center.x, -box.min.y, -center.z);
   scene.add(model);
   model.updateMatrixWorld(true);
-  box.setFromObject(model);
+  // 机械在地面以下的部分（藏在台仓里）不画，也不算进尺寸：不然从模型外侧斜着看，台面下的升降屏会从地底露出来
+  // （模型已经落地，不动的构件都在地面以上，所以整个画面在地面下 1 厘米处切掉就行；屏幕等材质后面还会换，按材质切会漏）
+  if (movers.size) renderer.clippingPlanes = [new THREE.Plane(new THREE.Vector3(0, 1, 0), 0.01)];
+  box.makeEmpty();
+  model.traverse(o => o.isMesh && !isMover(o) && box.expandByObject(o));
+  if (box.isEmpty()) box.setFromObject(model);
   size = box.getSize(new THREE.Vector3());
   center = box.getCenter(new THREE.Vector3());
 
