@@ -162,6 +162,11 @@ $('closeDemo').onclick = () => $('demo').close();
 $('demo').onclick = e => e.target === $('demo') && $('demo').close();
 $('demo').addEventListener('close', () => $('demoVid').pause());
 
+// ---------- 赞赏（微信赞赏码，只有中文界面） ----------
+$('tipBtn').onclick = () => $('tip').showModal();
+$('closeTip').onclick = () => $('tip').close();
+$('tip').onclick = e => e.target === $('tip') && $('tip').close();
+
 // ---------- 1. 选择模型 ----------
 const drop = $('drop');
 $('file').onchange = e => e.target.files[0] && load(e.target.files[0]);

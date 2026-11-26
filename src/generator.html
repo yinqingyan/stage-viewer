@@ -46,6 +46,12 @@
   #newsBtn.new::after { content:""; display:inline-block; width:7px; height:7px; margin:0 0 6px 4px; border-radius:50%; background:var(--gold); vertical-align:middle; }  /* 没看过的更新：金色小点 */
   #news .guide h2 { color:var(--gold); }
   dialog.demo { max-width:1000px; }
+  .contact .tip { margin-top:6px; }
+  dialog.tipd { max-width:340px; }
+  .tip-body { display:flex; flex-direction:column; align-items:center; gap:8px; padding:0 24px 26px; text-align:center; }
+  .tip-body img { width:240px; height:240px; padding:14px; background:#fff; border-radius:var(--r-md); }  /* 白边：二维码要留空白才好扫 */
+  .tip-body b { margin-top:10px; font-size:16px; }
+  .tip-body span { color:var(--dim); font-size:13px; line-height:1.6; }
   .demo video { display:block; width:calc(100% - 32px); margin:0 16px 16px; aspect-ratio:16/9; background:#000; border-radius:var(--r-md); }
   .lang { padding:6px 14px; background:rgba(255,255,255,.05); color:var(--text); border:1px solid var(--line2); border-radius:999px; font-size:13px; cursor:pointer; transition:border-color .2s, background .2s; }
   .lang:hover { border-color:var(--accent); background:rgba(123,140,255,.1); }
@@ -498,6 +504,8 @@
     <div class="contact">
       <img class="mascot" src="__SAKULA__" alt="撒库拉" translate="no">
       <span>有需求和建议？认识撒库拉的直接微信，不认识的发邮件：<a href="mailto:stageviewer.app@outlook.com">stageviewer.app@outlook.com</a></span>
+      <!-- 赞赏：只有微信赞赏码，英文界面不显示 -->
+      <div class="tip" data-lang="zh"><button class="link" id="tipBtn">☕ 觉得好用？请撒库拉喝杯咖啡</button></div>
     </div>
     <div class="foot-bar">
       <span class="brand">Stage Viewer <span>免费开源</span></span>
@@ -514,6 +522,11 @@
 <dialog id="demo" class="demo">
   <div class="close"><button id="closeDemo">关闭</button></div>
   <video id="demoVid" controls playsinline preload="none" src="video/demo-zh.mp4"></video>
+</dialog>
+
+<dialog id="tip" class="tipd">
+  <div class="close"><button id="closeTip">关闭</button></div>
+  <div class="tip-body"><img src="__WECHAT_TIP__" alt="微信赞赏码" width="240" height="240"><b>微信扫一扫，赞赏撒库拉</b><span>自愿支持，工具一直免费。在微信里打开这个网页的，长按二维码识别</span></div>
 </dialog>
 
 <dialog id="news">

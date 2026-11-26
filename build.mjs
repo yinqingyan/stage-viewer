@@ -30,6 +30,7 @@ const page = readFileSync('src/generator.html', 'utf8')
   .replace('<!--__NEWS_EN__-->', () => markdown(news[1]))
   .replace('__SAKULA__', () => 'data:image/webp;base64,' + readFileSync('docs/img/sakula-peek.webp').toString('base64'))  // 页脚撒库拉小人
   .replace('__SAKULA_IDEA__', () => 'data:image/webp;base64,' + readFileSync('docs/img/sakula-idea.webp').toString('base64'))  // 生成成功
+  .replace('__WECHAT_TIP__', () => 'data:image/webp;base64,' + readFileSync('docs/img/wechat-tip.webp').toString('base64'))  // 页脚「请撒库拉喝杯咖啡」
   .replace('__SAKULA_BOOM__', () => 'data:image/webp;base64,' + readFileSync('docs/img/sakula-boom.webp').toString('base64'))  // 生成失败
   .replace('<script>/*__APP__*/</script>', () => `<script>const VIEWER=${viewer};${genApp}</script>`);
 mkdirSync('dist', { recursive: true });

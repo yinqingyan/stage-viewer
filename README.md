@@ -85,3 +85,9 @@ node build.mjs        # 打包查看器模板和生成器网页（dist/舞美生
 MIT 许可，见 [LICENSE](LICENSE)。内含 [three.js](https://github.com/mrdoob/three.js)（MIT），`src/vendor/FBXLoader.js` 改自 three.js 自带的读取器。机位功能参考了 OpenShotDesigner（GPL）的思路，没有使用它的代码；以后修改也不要复制它的代码。
 
 有需求和建议：认识撒库拉的直接微信，不认识的发邮件 **stageviewer.app@outlook.com**
+
+## 支持一下
+
+工具一直免费。觉得好用，可以微信扫一扫请撒库拉喝杯咖啡：
+
+<img src="docs/img/wechat-tip.webp" alt="微信赞赏码" width="200">
