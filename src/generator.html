@@ -391,8 +391,8 @@
     </div>
     <div class="cta">
       <a class="btn" href="#prep">第一次用？先看导出要求</a>
-      <!-- 演示视频只有中文版，英文界面不显示 -->
-      <button class="btn" id="demoBtn" data-lang="zh"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"/></svg>看演示视频（2 分钟）</button>
+      <!-- 演示视频按界面语言播 video/demo-zh.mp4 或 demo-en.mp4 -->
+      <button class="btn" id="demoBtn"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"/></svg>看演示视频（2 分钟）</button>
     </div>
    </div>
   <section class="step" id="s1">
@@ -522,7 +522,7 @@
 
 <dialog id="demo" class="demo">
   <div class="close"><button id="closeDemo">关闭</button></div>
-  <video id="demoVid" controls playsinline preload="none" src="video/demo-zh.mp4"></video>
+  <video id="demoVid" controls playsinline preload="none"></video>
 </dialog>
 
 <dialog id="tip" class="tipd">

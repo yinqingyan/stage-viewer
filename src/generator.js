@@ -38,7 +38,7 @@ addWords({
     'Turn any 3D model from 3ds Max, C4D, SketchUp, Blender or similar into a single html file: stages, exhibition booths, buildings, interiors, products. Double-click to explore it in 3D on a computer or phone, walk through it in first person, and share it by email or chat.',
   '模型只在你的电脑上处理，不会上传到任何地方': 'Your model is processed on your own computer and never uploaded',
   '全程在浏览器里完成，免费开源': 'Everything runs in your browser — free and open source',
-  '第一次用？先看导出要求': 'First time? Read the export checklist',
+  '第一次用？先看导出要求': 'First time? Read the export checklist', '看演示视频（2 分钟）': 'Watch the demo (2 min)',
   // 导出前
   '导出模型前，做对这 4 件事': 'Four things to get right before you export',
   '前两条所有模型都要做对，贴图和尺寸才对；后两条只有舞台用得上，让网页认得出灯、会动。': 'The first two apply to every model and get textures and size right; the last two only matter for stages, so the page recognises lights and moves machinery.',
@@ -156,8 +156,13 @@ $('newsBtn').onclick = () => {
 $('closeNews').onclick = () => $('news').close();
 $('news').onclick = e => e.target === $('news') && $('news').close();
 
-// ---------- 演示视频（中文版）：弹窗里播放，关掉就暂停 ----------
-$('demoBtn').onclick = () => { $('demo').showModal(); $('demoVid').play().catch(() => {}); };
+// ---------- 演示视频：按当前语言播中文版或英文版，弹窗里播放，关掉就暂停 ----------
+$('demoBtn').onclick = () => {
+  const v = $('demoVid'), src = `video/demo-${lang}.mp4`;
+  if (!v.src.endsWith(src)) v.src = src;
+  $('demo').showModal();
+  v.play().catch(() => {});
+};
 $('closeDemo').onclick = () => $('demo').close();
 $('demo').onclick = e => e.target === $('demo') && $('demo').close();
 $('demo').addEventListener('close', () => $('demoVid').pause());
