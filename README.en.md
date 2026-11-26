@@ -25,6 +25,9 @@ The generated page offers:
 - Preset views (front, left/right 45°, plan); drag to orbit and zoom with mouse or touch
 - **Walk mode**: walk through the model in first person, sit down, check real sightlines
 - **Director mode**: place camera positions and measure distances
+- **Seat view**: click a seat to see the view from it, with the distance to the screen; one click for far left, far right and back row
+- **Screenshot and orbit video**: save the current view as a high-resolution image, or record a 90° / 180° / 360° turn as a video, without the interface
+- **Surfaces**: turn floors and decks into carpet, concrete, wood, dance floor or gloss in any colour; “Save as new file” keeps the look for whoever you send it to
 - Screen-texture toggle and display settings; the model's size is shown in the top-right corner
 
 ## Extras for stage design

@@ -95,6 +95,34 @@
   body.seating #walkHint, body.seating #walkBtns, body.seating #joy { display:none !important; }
   @media (max-width:600px) { #seatBar { width:calc(100% - 24px); } #seatTip { flex-basis:100%; text-align:center; padding:2px 0; } body.seating #side { display:none; } }
   .icon { display:flex; align-items:center; padding:7px 9px; }
+  /* 构件信息卡里的表面材质：材质一排、颜色一排 */
+  #info .sf { display:flex; flex-wrap:wrap; align-items:center; gap:4px; margin-top:6px; }
+  #info .sf .k { width:100%; }
+  #info .sf button { background:#2a2e38; padding:4px 8px; font-size:12px; }
+  #info .sf button.on { background:var(--accent); }
+  #info .sw { width:22px; height:22px; padding:0; border-radius:50%; border:2px solid rgba(255,255,255,.18); box-sizing:border-box; }  /* 淡边：深色色块在面板上也看得见 */
+  #info .sw.on { border-color:#fff; }
+  #info .sw-pick { position:relative; overflow:hidden; cursor:pointer; background:conic-gradient(#e44, #ec4, #4c6, #4ae, #84e, #e44); }
+  #info .sw-pick input { position:absolute; inset:0; opacity:0; cursor:pointer; }
+  #info .sf-n { margin-top:4px; font-size:12px; }
+  #saveCopy { flex:none; background:var(--accent); color:#fff; }  /* 右侧面板列的最上面 */
+  #saveCopy[hidden] { display:none; }
+  /* 环绕视频：相机图标旁的小菜单，录制中顶部一条红点提示 */
+  #capWrap { position:relative; }
+  #vidMenu { position:absolute; bottom:calc(100% + 6px); right:0; display:flex; flex-direction:column; gap:6px; padding:10px; width:max-content; background:var(--panel); border:1px solid var(--line); border-radius:8px; backdrop-filter:blur(6px); }
+  #vidMenu[hidden] { display:none; }
+  #vidMenu .vm-t { font-weight:600; display:flex; flex-direction:column; gap:2px; }
+  #vidMenu .vm-t .k { font-weight:400; font-size:12px; }
+  #vidMenu .vm-row { display:flex; align-items:center; gap:4px; }
+  #vidMenu .vm-row .k { width:36px; }
+  #vidMenu .vm-row button { background:#2a2e38; padding:5px 9px; }
+  #vidMenu .vm-row button.on { background:var(--accent); }
+  #vidGo { background:var(--accent); margin-top:2px; }
+  #recBar { position:fixed; left:50%; top:12px; transform:translateX(-50%); z-index:7; display:flex; align-items:center; gap:8px; padding:4px 6px 4px 12px; background:var(--panel); border:1px solid var(--line); border-radius:8px; }
+  #recBar[hidden] { display:none; }
+  #recBar i { width:9px; height:9px; border-radius:50%; background:#ff4d4f; }
+  #recBar button { background:#2a2e38; }
+  body.recording .bar, body.recording #side, body.recording #info, body.recording #flyHint { display:none; }
   .icon svg { width:16px; height:16px; }
   #dpBar button { background:#2a2e38; }
   #dpBar button.on { background:var(--accent); }
@@ -234,6 +262,7 @@
 <div id="joy"><div></div></div>
 <div id="walkBtns"><button id="jump">跳</button><button id="sit">坐下</button></div>
 <div id="side">
+  <button id="saveCopy" hidden title="把改过的表面材质存进一个新的 html，发给别人打开也是这个样子">保存为新文件</button>
   <section id="bgSec" class="panel show-only"><div class="sec-head">舞美图</div><div class="sec-body">
     <div class="sh-bg"><button id="bgLoad">导入平面图</button><button id="bgRot" title="顺时针转 90°">⟳ 90°</button><button id="bgDel">去掉</button></div>
     <label class="sh-bg-w" id="bgWRow">图片实际宽度 <input id="bgW" type="number" min="1" max="500" step="0.5"> 米</label>
@@ -254,6 +283,7 @@
   </div></section>
 </div>
 <div id="toast"></div>
+<div id="recBar" hidden><i></i>录制中 <b id="recT">0</b> / <span id="recLen">10</span> 秒<button id="recStop">停止</button></div>
 <div id="seatBar" hidden><span id="seatTip"></span><span id="seatQuick"><button data-seat="left">最左</button><button data-seat="right">最右</button><button data-seat="back">最后一排</button></span><button data-seat="pick">换座位</button><button data-seat="exit">退出</button></div>
 <div id="showBar" class="show-only">
   <div class="sb-row">
@@ -305,7 +335,15 @@
       <button id="grid" class="on">网格</button>
     </div>
   </div>
-  <div class="group"><button id="shot" class="icon" title="截图：把当前画面存成图片" aria-label="截图"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3.5l2-3h5l2 3H20v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg></button></div>
+  <div class="group" id="capWrap"><button id="shot" class="icon" title="截图：把当前画面存成图片" aria-label="截图"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3.5l2-3h5l2 3H20v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg></button><button id="vidBtn" class="icon" title="环绕视频：从当前视角绕一圈录成视频" aria-label="环绕视频"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="13" height="12" rx="2"/><path d="m16 10 5-3v10l-5-3z"/></svg></button>
+    <div id="vidMenu" hidden>
+      <div class="vm-t">环绕视频<span class="k">从当前视角开始，不带界面</span></div>
+      <div class="vm-row"><span class="k">角度</span><button data-arc="90">90°</button><button data-arc="180" class="on">180°</button><button data-arc="360">360°</button></div>
+      <div class="vm-row"><span class="k">时长</span><button data-secs="10" class="on">10 秒</button><button data-secs="20">20 秒</button><button data-secs="30">30 秒</button></div>
+      <div class="vm-row"><span class="k">方向</span><button data-dir="1" class="on">向左转</button><button data-dir="-1">向右转</button></div>
+      <button id="vidGo">开始录制</button>
+    </div>
+  </div>
 </div>
 
 <script>/*__STAGE__*/</script>

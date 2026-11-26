@@ -1,3 +1,4 @@
+import { pristine } from './pristine.js';  // 必须第一个：趁页面还没被改动时留一份副本
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
@@ -13,6 +14,8 @@ import { setupCameras } from './cameras.js';
 import { setupDirector } from './director.js';
 import { setupShow } from './show.js';
 import { setupMachines, KINDS } from './machines.js';
+import { SURFACES, SWATCHES, surfaceMaterial } from './surfaces.js';
+import { setupOrbitVideo } from './orbitvideo.js';
 import { setLang, translatePage, tr } from './i18n.js';
 
 // 构建脚本把模型和配置注入为 window.STAGE = { model: { format, gzip, data }, config }
@@ -28,6 +31,7 @@ const CFG = {
   materialOverrides: [], // 可选：材质模式下按构件名(mesh)或材质名(material)改颜色/反光，见 SKILL.md
   labels: [],          // 可选：在构件顶面写字 { mesh, text, color }
   textures: [],        // 可选：替换构件贴图 { mesh, image }，图片铺满构件每个面
+  surfaces: [],        // 可选：表面材质 { material 或 mesh: 名字, type: 'carpet'|'concrete'|'wood'|'vinyl'|'gloss', color }，网页里点构件选，「保存为新文件」写进来
   cameras: [],         // 可选：转播机位（网页里「复制机位」得到的 JSON）
   aim: null,           // 可选：{ floorBelow: 3 } 地上的灯朝上、天上的灯朝观众席，见 lights.js
   seats: { minHeight: 0.3, maxHeight: 0.6, maxLength: 1.6 },
@@ -152,6 +156,7 @@ function onLoad(root) {
       o.userData.origMat = ov.mat;
       if (ov.reflect) reflectors.push(o);
     }
+    o.userData.matName = [].concat(o.material)[0]?.name || '';
     o.material = clayMat;
     o.userData.box = new THREE.Box3().setFromObject(o);
     meshes.push(o);
@@ -193,6 +198,7 @@ function onLoad(root) {
   setupMachinesPanel();
   CFG.labels.forEach(addLabel);
   CFG.textures.forEach(replaceTexture);
+  CFG.surfaces.forEach(s => applySurface(s));
   const aim = CFG.aim && { floorBelow: CFG.aim.floorBelow ?? 3, forward: audienceDir() };
   lights = buildLights(scene, model, CFG.fixtures, meshes, aim, CFG.lightGroups);
   setupLights(lights);
@@ -456,7 +462,7 @@ const propMaterial = color => {
 function applyMode(m) {
   mode = m;
   document.getElementById('edges').classList.toggle('on', m === 'edges');
-  for (const o of meshes) o.material = o === selected ? selMat : m === 'wire' ? wireMat
+  for (const o of meshes) o.material = o === selected && !o.userData.surface ? selMat : m === 'wire' ? wireMat
     : (showScreens && o.userData.screenMat) || (m === 'orig' ? o.userData.origMat : clayMat);
   edgeLines.forEach(e => e.visible = m === 'edges');
   captureReflection();
@@ -509,9 +515,67 @@ function select(o) {
   info.innerHTML = (o.name ? `<b translate="no">${o.name}</b>` : '<b>未命名构件</b>') +
     (path.length ? `<div><span class="k">所属组</span> ${path.join(' / ')}</div>` : '') +
     `<div><span class="k">宽×深×高</span> ${b.x.toFixed(2)} × ${b.z.toFixed(2)} × ${b.y.toFixed(2)} m</div>` +
+    (o.userData.screenMat || o.userData.prop ? '' : surfacePicker(o)) +
     `<div class="hint">点击空白处取消选择</div>`;
   info.style.display = 'block';
 }
+
+// ---------- 表面材质 ----------
+// 在构件信息卡里选：同一材质（3ds Max 里的材质名）的构件一起换，没有材质名的只换这一个。
+// 改过之后右上角出现「保存为新文件」，把选择写进 surfaces 配置，发给别人打开也是这个样子
+const surfaces = CFG.surfaces.map(s => ({ ...s }));
+const surfaceKey = o => o.userData.matName ? { material: o.userData.matName } : { mesh: o.name };
+const sameKey = (s, k) => k.material ? s.material === k.material : s.mesh === k.mesh;
+const matching = k => meshes.filter(o => k.material ? o.userData.matName === k.material : o.name === k.mesh);
+function applySurface(s) {
+  for (const o of matching(s)) {
+    o.userData.baseMat ??= o.userData.origMat;
+    o.userData.origMat = s.type ? surfaceMaterial(s.type, s.color) : o.userData.baseMat;
+    o.userData.surface = s.type ? s : null;
+  }
+}
+function surfacePicker(o) {
+  const cur = o.userData.surface, n = matching(surfaceKey(o)).length;
+  const chip = (attr, v, label, on) => `<button data-${attr}="${v}"${on ? ' class="on"' : ''}>${label}</button>`;
+  return `<div class="sf"><span class="k">表面</span>${chip('sf', '', '原样', !cur)}` +
+    Object.entries(SURFACES).map(([k, s]) => chip('sf', k, s.label, cur?.type === k)).join('') + '</div>' +
+    (cur ? `<div class="sf"><span class="k">颜色</span>` +
+      SWATCHES.map(c => `<button data-sfc="${c}" class="sw${cur.color === c ? ' on' : ''}" style="background:${c}" title="${c}"></button>`).join('') +
+      `<label class="sw sw-pick" title="自定义颜色"><input type="color" value="${cur.color || SURFACES[cur.type].color}"></label></div>` : '') +
+    (n > 1 ? `<div class="k sf-n">同材质的 ${n} 个构件一起换</div>` : '');
+}
+function setSurface(o, type, color, redraw = true) {
+  const k = surfaceKey(o), i = surfaces.findIndex(s => sameKey(s, k));
+  const s = type ? { ...k, type, color: color || (i >= 0 && surfaces[i].type === type ? surfaces[i].color : SURFACES[type].color) } : { ...k, type: null };
+  if (i >= 0) surfaces.splice(i, 1);
+  if (type) surfaces.push(s);
+  applySurface(s);
+  if (redraw) select(o); else applyMode(mode);  // 拖取色器时不重画信息卡，不然取色器会被关掉
+  document.getElementById('saveCopy').hidden = false;
+}
+const infoCard = document.getElementById('info');
+infoCard.addEventListener('click', e => {
+  const b = e.target.closest('button');
+  if (!b || !selected) return;
+  if ('sf' in b.dataset) setSurface(selected, b.dataset.sf || null);
+  else if (b.dataset.sfc) setSurface(selected, selected.userData.surface.type, b.dataset.sfc);
+});
+infoCard.addEventListener('input', e => { if (e.target.type === 'color' && selected?.userData.surface) setSurface(selected, selected.userData.surface.type, e.target.value, false); });
+infoCard.addEventListener('change', e => { if (e.target.type === 'color' && selected?.userData.surface) setSurface(selected, selected.userData.surface.type, e.target.value); });
+
+// 保存为新文件：页面打开时的副本 + 新的配置。模型数据原样带上
+document.getElementById('saveCopy').onclick = () => {
+  const doc = pristine.cloneNode(true);
+  const tag = [...doc.querySelectorAll('script')].find(s => s.textContent.startsWith('window.STAGE='));
+  const config = { ...STAGE.config, surfaces: surfaces.filter(s => s.type) };
+  tag.textContent = 'window.STAGE=' + JSON.stringify({ model: STAGE.model, config }).replace(/</g, '\\u003c');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob(['<!doctype html>\n', doc.outerHTML], { type: 'text/html' }));
+  a.download = `${projectName.replace(/[\\/:*?"<>|]/g, '_')}.html`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+  flash('已保存新文件，发给别人打开就是现在的样子');
+};
 
 // ---------- 升降屏 ----------
 // 升降屏由配置 lifts 提供（按 Max 里的构件名）；高度指屏幕底边离正下方台面的距离，初始为模型里的位置
@@ -1014,6 +1078,38 @@ document.getElementById('shot').onclick = () => {
   flash('已保存截图');
 };
 
+// ---------- 环绕视频 ----------
+// 相机图标旁的菜单选角度、时长、方向，从当前视角开始绕旋转中心转；录制时界面收起，顶部只留「录制中 · 停止」
+const vidMenu = document.getElementById('vidMenu'), recBar = document.getElementById('recBar'), recT = document.getElementById('recT');
+const vidOpt = { arc: 180, secs: 10, dir: 1 };
+const orbitVid = setupOrbitVideo({
+  renderer, canvas, camera, controls, flash,
+  fileName: () => `${projectName.replace(/[\\/:*?"<>|]/g, '_')}-${tr('环绕')}${vidOpt.arc}°-${vidOpt.secs}s`,
+  onStart: secs => { document.getElementById('recLen').textContent = secs; recT.textContent = 0; recBar.hidden = false; document.body.classList.add('recording'); },
+  onEnd: saved => { recBar.hidden = true; document.body.classList.remove('recording'); if (saved) flash('视频已保存'); },
+});
+document.getElementById('vidBtn').onclick = e => {
+  e.stopPropagation();
+  if (walk.on) return flash('先退出人物走动或观众视角，再录环绕视频');
+  vidMenu.hidden = !vidMenu.hidden;
+};
+vidMenu.addEventListener('click', e => {
+  const b = e.target.closest('button');
+  if (!b) return;
+  const [k] = Object.keys(b.dataset);
+  if (k) {
+    vidOpt[k] = +b.dataset[k];
+    b.parentElement.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
+  } else if (b.id === 'vidGo') {
+    vidMenu.hidden = true;
+    tween = null;
+    orbitVid.start(vidOpt);
+  }
+});
+addEventListener('pointerdown', e => { if (!e.target.closest('#capWrap')) vidMenu.hidden = true; });
+document.getElementById('recStop').onclick = () => orbitVid.stop(true);
+addEventListener('keydown', e => { if (e.code === 'Escape' && orbitVid.on) orbitVid.stop(true); });
+
 const toast = document.getElementById('toast');
 let toastTimer;
 function flash(msg) {
@@ -1059,7 +1155,8 @@ renderer.setAnimationLoop(now => {
   updateLifts(dt);
   machines?.update(dt);
   cams?.tick(dt);
-  if (walk.on) updateWalk(dt);
+  if (orbitVid.tick()) recT.textContent = Math.floor(orbitVid.t);
+  else if (walk.on) updateWalk(dt);
   else {
     updateFly(dt);
     controls.update();
