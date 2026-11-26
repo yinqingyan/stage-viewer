@@ -86,6 +86,16 @@
   @media (max-width:600px) { #pip { width:calc(100% - 24px); bottom:auto; top:110px; } #pip.big { width:calc(100% - 24px); } }
   #dpBar { position:fixed; left:50%; bottom:12px; transform:translateX(-50%); display:flex; flex-wrap:wrap; justify-content:center; align-items:center; gap:4px; padding:4px 8px; background:var(--panel); border:1px solid var(--line); border-radius:8px; max-width:calc(100% - 24px); }
   #dpBar[hidden] { display:none; }
+  /* 观众视角：顶部一条，提示 + 快捷座位。坐着时只能转头，走动的按钮、摇杆、提示都不显示 */
+  #seatBar { position:fixed; left:50%; top:12px; transform:translateX(-50%); z-index:6; display:flex; flex-wrap:wrap; justify-content:center; align-items:center; gap:4px 6px; padding:4px 8px; background:var(--panel); border:1px solid var(--line); border-radius:8px; width:max-content; max-width:calc(100% - 24px); }
+  #seatBar[hidden] { display:none; }
+  #seatTip { padding:0 6px; color:var(--dim); white-space:nowrap; }
+  #seatTip b { color:var(--text); margin-right:8px; }
+  #seatBar button { background:#2a2e38; }
+  body.seating #walkHint, body.seating #walkBtns, body.seating #joy { display:none !important; }
+  @media (max-width:600px) { #seatBar { width:calc(100% - 24px); } #seatTip { flex-basis:100%; text-align:center; padding:2px 0; } body.seating #side { display:none; } }
+  .icon { display:flex; align-items:center; padding:7px 9px; }
+  .icon svg { width:16px; height:16px; }
   #dpBar button { background:#2a2e38; }
   #dpBar button.on { background:var(--accent); }
   #dpBar input { width:90px; accent-color:var(--accent); }
@@ -244,6 +254,7 @@
   </div></section>
 </div>
 <div id="toast"></div>
+<div id="seatBar" hidden><span id="seatTip"></span><span id="seatQuick"><button data-seat="left">最左</button><button data-seat="right">最右</button><button data-seat="back">最后一排</button></span><button data-seat="pick">换座位</button><button data-seat="exit">退出</button></div>
 <div id="showBar" class="show-only">
   <div class="sb-row">
     <button id="shMusic">♪ 导入音乐</button><span id="shMusicName" class="k"></span>
@@ -282,6 +293,7 @@
   </div>
   <div class="group">
     <button id="walk">人物走动</button>
+    <button id="seatBtn" title="坐到观众席任一座位，看那里的画面">观众视角</button>
     <button id="dpEnter">导摄模式</button>
   </div>
   <div class="group" id="showWrap">
@@ -293,6 +305,7 @@
       <button id="grid" class="on">网格</button>
     </div>
   </div>
+  <div class="group"><button id="shot" class="icon" title="截图：把当前画面存成图片" aria-label="截图"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3.5l2-3h5l2 3H20v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg></button></div>
 </div>
 
 <script>/*__STAGE__*/</script>

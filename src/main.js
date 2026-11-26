@@ -210,7 +210,7 @@ function onLoad(root) {
   });
   dp = setupDirector({ renderer, canvas, scene, cams, meshes, floorAt, size, center, audienceDir, mainControls: controls,
     // 导摄时机位面板展开，升降屏、灯光收起
-    onToggle: on => { if (!on) return; ['#lifts', '#lights'].forEach(q => document.querySelector(q).classList.add('closed')); document.getElementById('cams').classList.remove('closed'); } });
+    onToggle: on => { if (!on) return; if (seatView.on) exitSeatView(); ['#lifts', '#lights'].forEach(q => document.querySelector(q).classList.add('closed')); document.getElementById('cams').classList.remove('closed'); } });
   if (meshes.some(o => o.userData.screenMat)) screensBtn.hidden = false;
   applyMode(mode);
 
@@ -489,7 +489,7 @@ const ray = new THREE.Raycaster(), ptr = new THREE.Vector2();
 let down = null;
 canvas.addEventListener('pointerdown', e => down = [e.clientX, e.clientY]);
 canvas.addEventListener('pointerup', e => {
-  if (dp?.on || show) return;
+  if (dp?.on || show || seatView.on) return;  // 观众视角里点击是选座位
   if (!down || Math.hypot(e.clientX - down[0], e.clientY - down[1]) > 5) return;
   ptr.set(e.clientX / innerWidth * 2 - 1, -e.clientY / innerHeight * 2 + 1);
   ray.setFromCamera(ptr, camera);
@@ -691,11 +691,17 @@ const isSeat = b => {
 };
 const walk = { on: false, yaw: 0, pitch: 0, feet: 0, vy: 0, seat: null, keys: new Set(), joy: new THREE.Vector2(), look: null };
 const walkBtn = document.getElementById('walk');
-walkBtn.onclick = () => setWalk(!walk.on);
+// 观众视角里按「人物走动」：就在座位旁站起来走
+walkBtn.onclick = () => {
+  if (!seatView.on) return setWalk(!walk.on);
+  endSeatView();
+  if (walk.on) { standUp(); walkBtn.classList.add('on'); } else setWalk(true);
+};
 
-function setWalk(on) {
+function setWalk(on, keepSeatView = false) {
+  if (!on && seatView.on && !keepSeatView) endSeatView();
   walk.on = on;
-  walkBtn.classList.toggle('on', on);
+  walkBtn.classList.toggle('on', on && !seatView.on);  // 观众视角借用走动的坐姿，但按钮不亮
   document.body.classList.toggle('walking', on);
   controls.enabled = !on;
   fly.clear();
@@ -761,8 +767,7 @@ function sitDown() {
   walk.stand = { pos: camera.position.clone(), feet: walk.feet };  // 站起来回到原地
   walk.vy = 0;
   camera.position.set(best.p.x, best.p.y + SIT_EYE, best.p.z);
-  walk.yaw = Math.atan2(best.p.x - center.x, best.p.z - center.z);
-  walk.pitch = 0.05;
+  faceStage();
   sitBtn.classList.add('on');
   sitBtn.textContent = '站起';
 }
@@ -780,7 +785,7 @@ function updateWalk(dt) {
   const ix = (k.has('KeyD') || k.has('ArrowRight')) - (k.has('KeyA') || k.has('ArrowLeft')) + walk.joy.x;
   const iz = (k.has('KeyW') || k.has('ArrowUp')) - (k.has('KeyS') || k.has('ArrowDown')) + walk.joy.y;
   if (walk.seat) {
-    if (ix || iz) standUp();  // 坐着时一动就站起来
+    if ((ix || iz) && !seatView.on) standUp();  // 坐着时一动就站起来；观众视角里只能转头
     else return camera.rotation.set(walk.pitch, walk.yaw, 0, 'YXZ');
   }
   const speed = SPEED * (k.has('ShiftLeft') || k.has('ShiftRight') ? RUN : 1) * dt;
@@ -842,7 +847,7 @@ function updateFly(dt) {
 
 addEventListener('keydown', e => {
   if (!walk.on) return;
-  if (e.code === 'Escape') return setWalk(false);
+  if (e.code === 'Escape') return seatView.on ? exitSeatView() : setWalk(false);
   if (e.code === 'Space') { e.preventDefault(); return jump(); }
   if (e.code === 'KeyC') return sitDown();
   walk.keys.add(e.code);
@@ -869,6 +874,145 @@ canvas.addEventListener('pointercancel', endLook);
 const sitBtn = document.getElementById('sit');
 sitBtn.onclick = sitDown;
 document.getElementById('jump').onclick = jump;
+
+// ---------- 观众视角 ----------
+// 先切到平面图，点一个座位（或按「中间」「最左」…）就坐过去：坐姿眼高（座面以上 0.8 米），面朝舞台。
+// 坐下后就是人物走动的坐姿，拖动转头看；按走动键会站起来。模型里没认出座位时，点哪儿就以坐姿眼高（离地 1.2 米）看
+const seatView = { on: false, list: null };
+const seatBar = document.getElementById('seatBar'), seatTip = document.getElementById('seatTip'), seatBtn = document.getElementById('seatBtn');
+// 看向哪里：有屏幕就看屏幕中心，没有就看舞台中间、台面往上一点
+function stageLook() {
+  const b = new THREE.Box3();
+  meshes.forEach(o => o.userData.screenMat && b.expandByObject(o));
+  return b.isEmpty() ? center.clone().setY(size.y * 0.3) : b.getCenter(new THREE.Vector3());
+}
+function faceStage() {
+  const t = stageLook(), p = camera.position;
+  walk.yaw = Math.atan2(p.x - t.x, p.z - t.z);
+  walk.pitch = THREE.MathUtils.clamp(Math.atan2(t.y - p.y, Math.hypot(t.x - p.x, t.z - p.z)), -0.6, 0.6);
+}
+// 观众席一侧的座位：u 是左右（观众面向舞台时往左为正），v 是离舞台前区的远近
+function audienceSeats() {
+  if (seatView.list) return seatView.list;
+  const fwd = audienceDir(), left = new THREE.Vector3(-fwd.z, 0, fwd.x), front = stageFront();
+  const all = [];
+  for (const o of meshes) {
+    const b = o.userData.box;
+    if (!b || o.userData.noSeat || !isSeat(b)) continue;
+    const p = b.getCenter(new THREE.Vector3()).setY(b.max.y);
+    if (b.min.y - floorAt(p.x, p.z, b.min.y - 0.01) > 0.3) continue;  // 悬空的（如挂着的灯具零件）不是座位
+    all.push({ p, u: p.dot(left), v: p.clone().sub(front).dot(fwd) });
+  }
+  const front0 = all.filter(s => s.v > 0);
+  return seatView.list = front0.length ? front0 : all;
+}
+function quickSeat(kind) {
+  const s = audienceSeats();
+  if (!s.length) return null;
+  const us = s.map(x => x.u), vs = s.map(x => x.v);
+  const u0 = Math.min(...us), u1 = Math.max(...us), v1 = Math.max(...vs), uc = (u0 + u1) / 2;
+  const min = f => s.reduce((a, b) => f(b) < f(a) ? b : a);
+  switch (kind) {
+    case 'left': return min(x => (x.u < u1 - 0.6 ? 1e6 : 0) + x.v);   // 最左边那一列里最靠前的：视角最斜
+    case 'right': return min(x => (x.u > u0 + 0.6 ? 1e6 : 0) + x.v);
+    case 'back': return min(x => (x.v < v1 - 0.6 ? 1e6 : 0) + Math.abs(x.u - uc));
+  }
+}
+function sitAt(p, eye = SIT_EYE) {
+  if (!walk.on) setWalk(true, true);
+  const feet = floorAt(p.x, p.z, p.y - 0.05);
+  walk.stand = { pos: new THREE.Vector3(p.x, feet + EYE, p.z), feet };  // 站起来就站在座位旁
+  walk.seat = p;
+  walk.vy = 0;
+  camera.position.set(p.x, p.y + eye, p.z);
+  faceStage();
+  sitBtn.classList.add('on');
+  sitBtn.textContent = '站起';
+  const t = stageLook(), d = Math.hypot(t.x - p.x, t.z - p.z);
+  seatTip.innerHTML = `<b>离${meshes.some(o => o.userData.screenMat) ? '屏幕' : '舞台中心'} ${d.toFixed(1)} 米</b>拖动转头看`;
+  document.querySelector('[data-seat=pick]').hidden = false;
+}
+function startSeatView() {
+  if (dp?.on) return flash('先退出导摄模式');
+  // 记住进来前的视角，退出时回去；走动中进来的就退到正立面
+  seatView.back = walk.on ? null : { pos: camera.position.clone(), target: controls.target.clone(), view: currentView };
+  seatView.on = true;
+  seatBtn.classList.add('on');
+  document.body.classList.add('seating');
+  seatBar.hidden = false;
+  select(null);
+  const has = audienceSeats().length > 0;
+  document.getElementById('seatQuick').hidden = !has;
+  pickSeat();
+  if (!has) flash('没有认出座位，点地面就以坐着的高度看');
+}
+function pickSeat() {
+  if (walk.on) setWalk(false, true);
+  goTo('top');
+  seatTip.textContent = audienceSeats().length ? '点一个座位，看坐在那里的画面' : '点观众区的地面，看那里的画面';
+  document.querySelector('[data-seat=pick]').hidden = true;  // 已经在选了
+}
+function endSeatView() {
+  seatView.on = false;
+  seatBtn.classList.remove('on');
+  document.body.classList.remove('seating');
+  seatBar.hidden = true;
+}
+function exitSeatView() {
+  endSeatView();
+  if (walk.on) setWalk(false, true);
+  const b = seatView.back;
+  if (!b) return goTo('front');
+  if (b.view) return goTo(b.view);
+  tween = { t: 0, p0: camera.position.clone(), t0: controls.target.clone(), pos: b.pos, target: b.target };
+}
+seatBtn.onclick = () => seatView.on ? exitSeatView() : startSeatView();
+seatBar.addEventListener('click', e => {
+  const k = e.target.dataset?.seat;
+  if (!k) return;
+  if (k === 'exit') return exitSeatView();
+  if (k === 'pick') return pickSeat();
+  const s = quickSeat(k);
+  if (s) sitAt(s.p);
+});
+addEventListener('keydown', e => { if (e.code === 'Escape' && seatView.on && !walk.on) exitSeatView(); });  // 选座位时 Esc 也退出
+// 平面图上点座位：按下和抬起离得近才算点击（拖动是在转视角）
+const seatRay = new THREE.Raycaster();
+let seatDown = null;
+canvas.addEventListener('pointerdown', e => { seatDown = seatView.on && !walk.on ? { x: e.clientX, y: e.clientY } : null; });
+canvas.addEventListener('pointerup', e => {
+  if (!seatDown || Math.hypot(e.clientX - seatDown.x, e.clientY - seatDown.y) > 6) return;
+  seatDown = null;
+  const r = canvas.getBoundingClientRect();
+  seatRay.setFromCamera(new THREE.Vector2((e.clientX - r.left) / r.width * 2 - 1, -(e.clientY - r.top) / r.height * 2 + 1), camera);
+  const hit = seatRay.intersectObjects(meshes, false)[0];
+  if (!hit) return;
+  const seats = audienceSeats();
+  if (seats.length) {
+    const near = seats.reduce((a, b) => b.p.distanceTo(hit.point) < a.p.distanceTo(hit.point) ? b : a);
+    if (near.p.distanceTo(hit.point) < 1.5) return sitAt(near.p);
+    return flash('这里没有座位，点椅子试试');
+  }
+  sitAt(hit.point, 1.2);
+});
+
+// ---------- 截图 ----------
+// 按至少 2 倍清晰度重画当前这一帧，存成 PNG（宽不超过 4096 像素）
+document.getElementById('shot').onclick = () => {
+  const pr = renderer.getPixelRatio(), w = canvas.clientWidth;
+  renderer.setPixelRatio(Math.min(Math.max(2, pr), 4096 / w));
+  renderFrame();
+  canvas.toBlob(b => {
+    const a = document.createElement('a');
+    const now = new Date(), pad = n => String(n).padStart(2, '0');
+    a.href = URL.createObjectURL(b);
+    a.download = `${projectName.replace(/[\\/:*?"<>|]/g, '_')}-${tr('截图')}-${pad(now.getMonth() + 1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}.png`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  }, 'image/png');
+  renderer.setPixelRatio(pr);
+  flash('已保存截图');
+};
 
 const toast = document.getElementById('toast');
 let toastTimer;
@@ -921,9 +1065,12 @@ renderer.setAnimationLoop(now => {
     controls.update();
   }
   show?.tick(dt);
+  renderFrame();
+});
+function renderFrame() {
   if (show) show.render();
   else if (dp?.on) dp.render();
   else renderer.render(scene, camera);
   cams?.renderOverlay(dp?.on ? dp.camera : camera);
   if (dp?.on) cams?.renderPip();  // 机位窗口只在导摄模式显示
-});
+}

@@ -85,6 +85,7 @@ export function translatePage() {
 const PATTERNS = [
   [/^模型加载失败：(.*)$/, e => `Failed to load the model: ${e}`],
   [/^附近 (\S+) 米内没有座位$/, r => `No seat within ${r} m`],
+  [/^离(屏幕|舞台中心) (\S+) 米$/, (w, d) => `${d} m to the ${w === '屏幕' ? 'screen' : 'stage centre'}`],
   [/^(\d+) 台 (.+)$/, (n, types) => `${n} × ${one(types)}`],
   [/^(\d+) 只 (.+)$/, (n, types) => `${n} × ${one(types)}`],
   [/^点击(平面图|地面或台面)放置「(.*)」$/, (w, what) => `Click the ${w === '平面图' ? 'plan' : 'floor or deck'} to place “${one(what)}”`],
@@ -106,6 +107,12 @@ const EN = {
   // 视角、显示
   '正立面': 'Front', '左侧 45°': 'Left 45°', '右侧 45°': 'Right 45°', '平面': 'Plan',
   '人物走动': 'Walk', '导摄模式': 'Director', '显示 ▴': 'View ▴', '显示': 'View',
+  '观众视角': 'Seat view', '坐到观众席任一座位，看那里的画面': 'Sit in any audience seat and see the view from there',
+  '截图': 'Screenshot', '截图：把当前画面存成图片': 'Screenshot: save the current view as an image', '已保存截图': 'Screenshot saved',
+  '最左': 'Far left', '最右': 'Far right', '最后一排': 'Back row', '换座位': 'Pick seat', '拖动转头看': 'Drag to look around',
+  '点一个座位，看坐在那里的画面': 'Click a seat to see the view from it', '点观众区的地面，看那里的画面': 'Click the audience floor to see the view from there',
+  '这里没有座位，点椅子试试': 'No seat here, try clicking a chair', '没有认出座位，点地面就以坐着的高度看': 'No seats recognised; click the floor to look from seated height',
+  '先退出导摄模式': 'Exit director mode first', '退出': 'Exit',
   '材质': 'Materials', '白模+线': 'Clay + edges', '屏幕内容': 'Screen content', '人物比例': 'Scale figure', '网格': 'Grid',
   '跳': 'Jump', '坐下': 'Sit', '站起': 'Stand',
   // 构件信息
