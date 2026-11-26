@@ -91,3 +91,5 @@ MIT 许可，见 [LICENSE](LICENSE)。内含 [three.js](https://github.com/mrdoo
 工具一直免费。觉得好用，可以微信扫一扫请撒库拉喝杯咖啡：
 
 <img src="docs/img/wechat-tip.webp" alt="微信赞赏码" width="200">
+
+在海外、没有微信：[ko-fi.com/yinqingyan](https://ko-fi.com/yinqingyan)

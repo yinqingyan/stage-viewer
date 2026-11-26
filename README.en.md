@@ -85,3 +85,7 @@ node build.mjs        # build the viewer template and the generator page (dist/è
 MIT, see [LICENSE](LICENSE). Includes [three.js](https://github.com/mrdoob/three.js) (MIT); `src/vendor/FBXLoader.js` is adapted from the three.js loader. The camera-position feature follows ideas from OpenShotDesigner (GPL) without using its code; please don't copy its code in future changes either.
 
 Bugs or feature requests: **stageviewer.app@outlook.com**
+
+## Support
+
+The tool stays free. If it helps you, you can buy Sakula a coffee on [Ko-fi](https://ko-fi.com/yinqingyan).
