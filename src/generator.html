@@ -41,8 +41,10 @@
   .brand:hover { color:var(--text); text-decoration:none; }
   .brand svg { flex:none; }
   .top-r { display:flex; align-items:center; gap:22px; font-size:14px; }
-  .top-r .link, .top-r a { color:var(--soft); }
+  .top-r .link, .top-r a { color:var(--soft); white-space:nowrap; }
   .top-r .link:hover, .top-r a:hover { color:var(--text); text-decoration:none; }
+  #newsBtn.new::after { content:""; display:inline-block; width:7px; height:7px; margin:0 0 6px 4px; border-radius:50%; background:var(--gold); vertical-align:middle; }  /* 没看过的更新：金色小点 */
+  #news .guide h2 { color:var(--gold); }
   .lang { padding:6px 14px; background:rgba(255,255,255,.05); color:var(--text); border:1px solid var(--line2); border-radius:999px; font-size:13px; cursor:pointer; transition:border-color .2s, background .2s; }
   .lang:hover { border-color:var(--accent); background:rgba(123,140,255,.1); }
 
@@ -298,6 +300,7 @@
     .hero { margin-top:-60px; padding-top:60px; }
     .top-r { gap:14px; }
     .top-r .gh { display:none; }
+    .topbar .brand-t { display:none; }  /* 手机顶栏放不下：只留图标 */
     .hero-in { padding-top:20px; padding-bottom:48px; gap:16px; }
     /* 手机：标题和一句话介绍之后马上是拖放区，隐私说明和「第一次用？」挪到它下面 */
     .hero-text { display:contents; }
@@ -354,9 +357,10 @@
   <div class="wrap">
     <a class="brand" href="#" aria-label="Stage Viewer">
       <svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-hidden="true"><rect x=".75" y=".75" width="26.5" height="26.5" rx="8" stroke="url(#lg)" stroke-width="1.5"/><path d="M9 6h10l3.5 15h-17z" fill="url(#lb)" opacity=".85"/><path d="M5 21.5h18" stroke="#ffd28a" stroke-width="1.6" stroke-linecap="round"/><defs><linearGradient id="lg" x1="0" y1="0" x2="28" y2="28"><stop stop-color="#7b8cff"/><stop offset="1" stop-color="#b07cff"/></linearGradient><linearGradient id="lb" x1="14" y1="6" x2="14" y2="21"><stop stop-color="#ffe2aa"/><stop offset="1" stop-color="#ffe2aa" stop-opacity=".05"/></linearGradient></defs></svg>
-      Stage Viewer
+      <span class="brand-t">Stage Viewer</span>
     </a>
     <div class="top-r">
+      <button class="link" id="newsBtn">最近更新</button>
       <button class="link" data-guide>模型准备说明</button>
       <a class="gh" href="https://github.com/yinqingyan/stage-viewer">GitHub</a>
       <button id="langBtn" class="lang">English</button>
@@ -501,6 +505,11 @@
 <dialog id="guide">
   <div class="close"><button id="closeGuide">关闭</button></div>
   <div class="guide" translate="no"><div data-lang="zh"><!--__GUIDE__--></div><div data-lang="en"><!--__GUIDE_EN__--></div></div>
+</dialog>
+
+<dialog id="news">
+  <div class="close"><button id="closeNews">关闭</button></div>
+  <div class="guide" translate="no"><div data-lang="zh"><h1>最近更新</h1><!--__NEWS__--></div><div data-lang="en"><h1>What's new</h1><!--__NEWS_EN__--></div></div>
 </dialog>
 
 <!-- 撒库拉表情：生成成功 / 失败时配在提示旁边（build.mjs 内嵌图片） -->

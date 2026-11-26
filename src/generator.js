@@ -33,7 +33,7 @@ try { saved = localStorage.getItem(LANG_KEY); } catch {}
 setLang(new URLSearchParams(location.search).get('lang') || saved || (navigator.language.startsWith('zh') ? 'zh' : 'en'));
 addWords({
   // 顶栏、头图
-  '3D 模型网页生成器': '3D Model to Web Page', '模型准备说明': 'Model guide', '关闭': 'Close',
+  '3D 模型网页生成器': '3D Model to Web Page', '模型准备说明': 'Model guide', '关闭': 'Close', '最近更新': "What's new",
   '把 3ds Max、C4D、SketchUp、Blender 等软件做的 3D 模型变成一个 html 文件，舞台、展台、建筑室内、产品都行。双击就能在电脑、手机上三维浏览、第一人称走进去看，发微信、邮件即可分享。':
     'Turn any 3D model from 3ds Max, C4D, SketchUp, Blender or similar into a single html file: stages, exhibition booths, buildings, interiors, products. Double-click to explore it in 3D on a computer or phone, walk through it in first person, and share it by email or chat.',
   '模型只在你的电脑上处理，不会上传到任何地方': 'Your model is processed on your own computer and never uploaded',
@@ -141,6 +141,20 @@ $('openExplain').onclick = () => {
 document.querySelectorAll('[data-guide]').forEach(b => b.onclick = () => $('guide').showModal());
 $('closeGuide').onclick = () => $('guide').close();
 $('guide').onclick = e => e.target === $('guide') && $('guide').close();
+
+// ---------- 最近更新 ----------
+// 最新一条的日期和上次打开时记下的不一样，按钮旁就亮一个小点；打开看过就灭
+const NEWS_KEY = 'stage-generator-news', latest = $('news').querySelector('h2')?.textContent || '';
+let seen = null;
+try { seen = localStorage.getItem(NEWS_KEY); } catch {}
+$('newsBtn').classList.toggle('new', !!latest && seen !== latest);
+$('newsBtn').onclick = () => {
+  $('news').showModal();
+  $('newsBtn').classList.remove('new');
+  try { localStorage.setItem(NEWS_KEY, latest); } catch {}
+};
+$('closeNews').onclick = () => $('news').close();
+$('news').onclick = e => e.target === $('news') && $('news').close();
 
 // ---------- 1. 选择模型 ----------
 const drop = $('drop');

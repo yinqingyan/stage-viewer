@@ -21,9 +21,13 @@ console.log(`模板：skill/stage-viewer/assets/viewer-template.html（${(html.l
 const gen = await esbuild.build({ entryPoints: ['src/generator.js'], bundle: true, minify: true, format: 'iife', write: false });
 const genApp = gen.outputFiles[0].text.replaceAll('</script', '<\\/script');
 const viewer = JSON.stringify(html).replace(/</g, '\\u003c');
+// 「最近更新」弹窗：CHANGELOG.md 在 <!-- en 那行切开，上中下英；去掉大标题和网址那段（弹窗就在网站上）
+const news = readFileSync('CHANGELOG.md', 'utf8').split(/^<!-- en.*$/m).map(t => t.trim().replace(/^# .*\n+.*https:\/\/\S+.*\n/, ''));
 const page = readFileSync('src/generator.html', 'utf8')
   .replace('<!--__GUIDE__-->', () => markdown(readFileSync('docs/模型准备说明.md', 'utf8')))
   .replace('<!--__GUIDE_EN__-->', () => markdown(readFileSync('docs/model-guide.en.md', 'utf8')))
+  .replace('<!--__NEWS__-->', () => markdown(news[0]))
+  .replace('<!--__NEWS_EN__-->', () => markdown(news[1]))
   .replace('__SAKULA__', () => 'data:image/webp;base64,' + readFileSync('docs/img/sakula-peek.webp').toString('base64'))  // 页脚撒库拉小人
   .replace('__SAKULA_IDEA__', () => 'data:image/webp;base64,' + readFileSync('docs/img/sakula-idea.webp').toString('base64'))  // 生成成功
   .replace('__SAKULA_BOOM__', () => 'data:image/webp;base64,' + readFileSync('docs/img/sakula-boom.webp').toString('base64'))  // 生成失败
