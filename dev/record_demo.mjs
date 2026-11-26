@@ -1,4 +1,5 @@
-// 开发工具：录一段 1 分钟以内的演示视频：模型拖进生成器 → 认出灯具座椅 → 生成 html → 打开后转视角、开光束、升降屏、人物走动。
+// 开发工具：录演示视频的主体：模型拖进生成器 → 认出灯具座椅 → 生成 html → 打开后转视角、开光束、升降屏、人物走动、
+// 观众视角、表面材质、截图和环绕视频 → 片尾。片尾从第几帧开始写在 帧目录/end.txt，dev/make_demo_video.sh 在那里插入「发给客户」一段。
 // 用法：node dev/record_demo.mjs dist/舞美生成器.html 测试模型/演示舞台.fbx 帧目录 [zh|en]
 //      ffmpeg -framerate 25 -i 帧目录/f%04d.jpg -c:v libx264 -crf 18 -preset slow -pix_fmt yuv420p -movflags +faststart 演示.mp4
 // 片头、转场黑场、片尾压黑都已画在帧里，ffmpeg 不用再加 fade。
@@ -26,7 +27,7 @@ await send('Emulation.setDeviceMetricsOverride', { width: W, height: H, deviceSc
 
 // 叠加层：章节字幕、假鼠标、点击波纹、拖动中的文件卡片、片头片尾、黑场。每次换页面重新装。
 // 所有动画都由每帧的 OV.tick(dt) 或 rec 的进度推进，不用 CSS transition（截图不是实时的）
-const STEPS = 8;
+const STEPS = 11;
 const OVERLAY = `(() => {
   const F = '"Noto Sans CJK SC","PingFang SC","Microsoft YaHei",sans-serif';
   const st = document.createElement('style');
@@ -84,10 +85,11 @@ const OVERLAY = `(() => {
       if (capPhase === 'in') { const k = ease(cl(capT / 320)); cap.style.opacity = k; cap.style.transform = 'translate(-50%,' + ((1 - k) * -16) + 'px) scale(' + (.96 + .04 * k) + ')'; if (k >= 1) capPhase = ''; }
     },
     cap(n, h, p) {  // 第 n 步（1 起）、标题、副标题；n 为 0 表示收起
-      const html = n ? '<div class="n"><b>' + String(n).padStart(2, '0') + '</b><s>/ 0' + ${STEPS} + '</s></div><div class="t"><h>' + h + '</h><p>' + p + '</p></div><div class="bar">' +
+      const html = n ? '<div class="n"><b>' + String(n).padStart(2, '0') + '</b><s>/ ' + String(${STEPS}).padStart(2, '0') + '</s></div><div class="t"><h>' + h + '</h><p>' + p + '</p></div><div class="bar">' +
         Array.from({ length: ${STEPS} }, (_, i) => '<i' + (i < n ? ' class="on"' : '') + '></i>').join('') + '</div>' : null;
       if (capPhase === '' && cap.style.opacity != 1) { if (!html) return; cap.innerHTML = html; capPhase = 'in'; capT = 0; } else { capNext = html; capPhase = 'out'; capT = 0; }
     },
+    capAt(bottom) { cap.style.top = bottom ? 'auto' : ''; cap.style.bottom = bottom ? '78px' : ''; },  // 字幕放底部（工具栏上方），让出顶部
     cur(x, y) { cx = x; cy = y; setCur(); },
     rip(x, y, k) {  // k: 0→1 波纹进度；鼠标同时按一下
       let r = document.querySelector('.ovRip'), d = document.querySelector('.ovRip2');
@@ -185,6 +187,7 @@ await click();
 for (let t = 0; t < 600 && !readdirSync(`${out}/dl`).some(f => f.endsWith('.html')); t++) await cap();
 await rec(1.2);
 const html = readdirSync(`${out}/dl`).find(f => f.endsWith('.html'));
+writeFileSync(`${out}/html.txt`, html);  // 后面「保存为新文件」会再下载一个，录样机用这一个
 await caption(0); await fade(1);
 
 // ---------- 2 生成的网页 ----------
@@ -239,8 +242,83 @@ await key('keyUp', 'KeyW', 'w');
 await press(); await move(520, 360, 1.6); await release();
 await rec(1);
 
-// 片尾：从画面淡入，最后压黑
+// 观众视角：平面图上点一个座位坐下看，再用「最左」「最后一排」快捷换座位
+const center = async q => mid(await rect(q));
+await ev(`OV.capAt(true); 1`);   // 观众视角顶部是「离屏幕 X 米」，字幕挪到底部
+await caption(9, T('观众视角', 'Seat view'), T('点一个座位坐下看，显示离屏幕多远', 'Click a seat to see from it, with the distance to the screen'));
+await move(...await center('#seatBtn'), .7); await click();
+await rec(1.6);
+// 在画布上找红色的座椅：取偏左、靠中间一排的一个像素（视角斜一点更有看头）
+const seat = await ev(`(() => { __step(0); const c = document.querySelector('canvas'), w = c.width, h = c.height, s = c.clientWidth / w;
+  const t = document.createElement('canvas'); t.width = w; t.height = h; const g = t.getContext('2d'); g.drawImage(c, 0, 0); const d = g.getImageData(0, 0, w, h).data;
+  const red = []; for (let y = 0; y < h; y += 2) for (let x = 0; x < w; x += 2) { const i = (y * w + x) * 4; if (d[i] > 120 && d[i + 1] < 60 && d[i + 2] < 70) red.push([x, y]); }
+  if (!red.length) return null; const xs = red.map(p => p[0]).sort((a, b) => a - b), ys = red.map(p => p[1]).sort((a, b) => a - b);
+  const tx = xs[Math.floor(xs.length * .25)], ty = ys[Math.floor(ys.length * .5)];
+  const p = red.reduce((a, b) => Math.hypot(b[0] - tx, b[1] - ty) < Math.hypot(a[0] - tx, a[1] - ty) ? b : a); return [p[0] * s, p[1] * s]; })()`);
+if (!seat) throw new Error('平面图上没找到座椅');
+await move(...seat, 1); await click();
+await rec(1.4);
+await press(); await move(cx + 90, cy, 1.2); await release();   // 坐着转头看一眼
+await rec(.4);
+await move(...await center('[data-seat=left]'), .7); await click();
+await rec(1.6);
+await move(...await center('[data-seat=back]'), .6); await click();
+await rec(1.6);
+await move(...await center('[data-seat=exit]'), .6); await click();
+await rec(1.2);
+
+// 表面材质：45° 视角下点地面换地毯、点台面换木地板，再「保存为新文件」
+await caption(0); await rec(.5); await ev(`OV.capAt(false); 1`);   // 收起再回到顶部
+await caption(10, T('表面材质', 'Surfaces'), T('地面、台面换成地毯、木地板，保存后发给别人也是这样', 'Turn floors into carpet or wood, and save it that way'));
+await move(...await center('#lights [data-all="0"]'), .8); await click();   // 灯全关：开着灯场景太暗，看不出材质
+await move(...v45, .8); await click();
+await rec(1.4);
+// 先不录帧，试点几个位置，找到地面和台面（点完取消选择，画面上看不出来）
+const probe = async (name, pts) => {
+  for (const [x, y] of pts) {
+    for (const type of ['mousePressed', 'mouseReleased']) await send('Input.dispatchMouseEvent', { type, x, y, button: 'left', buttons: type === 'mousePressed' ? 1 : 0, clickCount: 1 });
+    const hit = await ev(`document.querySelector('#info b')?.textContent`);
+    const shown = await ev(`getComputedStyle(document.getElementById('info')).display !== 'none'`);
+    for (const type of ['mousePressed', 'mouseReleased']) await send('Input.dispatchMouseEvent', { type, x: 640, y: 90, button: 'left', buttons: type === 'mousePressed' ? 1 : 0, clickCount: 1 });
+    if (shown && hit === name) return [x, y];
+  }
+  throw new Error('没找到 ' + name);
+};
+const grid = (x0, x1, y0, y1) => { const r = []; for (let y = y0; y <= y1; y += 20) for (let x = x0; x <= x1; x += 40) r.push([x, y]); return r; };
+const floorAt = await probe('地面', grid(700, 1100, 560, 640));
+const deckAt = await probe('舞台台面', grid(300, 700, 440, 520));
+await move(...floorAt, .9); await click();
+await rec(.6);
+await move(...await center('#info [data-sf=carpet]'), .7); await click();
+await rec(.8);
+await move(...deckAt, .9); await click();
+await rec(.6);
+await move(...await center('#info [data-sf=wood]'), .7); await click();
+await rec(.6);
+await move(640, 110, .6); await click();   // 点空白取消选择，看整体
+await rec(1.2);
+await move(...await center('#saveCopy'), .8); await click();
+await rec(1.8);
+
+// 截图、环绕视频：先存一张截图，再录一段环绕视频（录到一半按停止）
+await caption(11, T('截图、环绕视频', 'Screenshot & orbit video'), T('高清截图；一键绕一圈录成视频，不带界面', 'Hi-res screenshots, and one-click orbit videos without the interface'));
+await move(...await center('#lights [data-all="1"]'), .8); await click();   // 灯再打开，画面好看
+await rec(.6);
+await move(...await center('#shot'), .9); await click();
+await rec(1.2);
+await move(...await center('#vidBtn'), .5); await click();
+await rec(.5);
+await move(...await center('[data-arc="360"]'), .5); await click();
+await move(...await center('#vidGo'), .5); await click();
+await caption(0);   // 录制时顶部是「录制中 · 停止」，字幕让开
+await move(...await center('#recStop'), .8);
+await rec(3.4);
+await click();
+await rec(.8);
+
+// 片尾：从画面淡入，最后压黑。end.txt 记下片尾第一帧，拼接时在这之前插入「发给客户」
 await caption(0);
+writeFileSync(`${out}/end.txt`, String(frame));
 await ev(`OV.cur(-100, -100); OV.end('Stage Viewer', ${JSON.stringify(T('任何 3D 模型 → 一个 html', 'Any 3D model → one html file'))}, ${JSON.stringify(T('双击就能看 · 发给谁都能打开 · 模型不上传', 'Double-click to open · share with anyone · never uploaded'))}, 'yinqingyan.github.io/stage-viewer', ${JSON.stringify(T('免费开源 · FREE &amp; OPEN SOURCE', 'FREE &amp; OPEN SOURCE'))}); 1`);
 await rec(3.4, k => ev(`OV.scr(${k}); 1`));
 console.log('帧数', frame, '时长', (frame / FPS).toFixed(1), '秒', '报错', errs.length ? errs : '无');

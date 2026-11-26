@@ -31,8 +31,8 @@ await send('Page.navigate', { url: 'file://' + resolve(html) }); await sleep(150
 const step = (n = 1) => ev(`for (let i = 0; i < ${n}; i++) __step(${DT}); 1`);
 for (let t = 0; t < 600 && await ev(`!!document.getElementById('loading')`); t++) { await step(); await sleep(30); }
 // 准备：光束（面光除外）全开、机械全部到终点，走完动画
-await ev(`[...document.querySelectorAll('#lights button')].filter(b => b.textContent.trim() === '光束').forEach((b, i) => i !== 1 && b.click());
-  [...document.querySelectorAll('#machines button')].find(b => b.textContent.includes('全部到终点'))?.click(); 1`);
+await ev(`[...document.querySelectorAll('#lights button')].filter(b => ['光束', 'Beam'].includes(b.textContent.trim())).forEach((b, i) => i !== 1 && b.click());
+  [...document.querySelectorAll('#machines button')].find(b => /全部到终点|All to end/.test(b.textContent))?.click(); 1`);
 for (let i = 0; i < 260; i++) { await step(); if (i % 20 === 0) await sleep(10); }
 // 手机：面板收起，画面留给舞台
 if (phone) await ev(`document.querySelectorAll('#side .panel').forEach(p => p.classList.add('closed')); 1`);
