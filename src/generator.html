@@ -45,6 +45,8 @@
   .top-r .link:hover, .top-r a:hover { color:var(--text); text-decoration:none; }
   #newsBtn.new::after { content:""; display:inline-block; width:7px; height:7px; margin:0 0 6px 4px; border-radius:50%; background:var(--gold); vertical-align:middle; }  /* 没看过的更新：金色小点 */
   #news .guide h2 { color:var(--gold); }
+  dialog.demo { max-width:1000px; }
+  .demo video { display:block; width:calc(100% - 32px); margin:0 16px 16px; aspect-ratio:16/9; background:#000; border-radius:var(--r-md); }
   .lang { padding:6px 14px; background:rgba(255,255,255,.05); color:var(--text); border:1px solid var(--line2); border-radius:999px; font-size:13px; cursor:pointer; transition:border-color .2s, background .2s; }
   .lang:hover { border-color:var(--accent); background:rgba(123,140,255,.1); }
 
@@ -383,6 +385,8 @@
     </div>
     <div class="cta">
       <a class="btn" href="#prep">第一次用？先看导出要求</a>
+      <!-- 演示视频只有中文版，英文界面不显示 -->
+      <button class="btn" id="demoBtn" data-lang="zh"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"/></svg>看演示视频（1 分钟）</button>
     </div>
    </div>
   <section class="step" id="s1">
@@ -505,6 +509,11 @@
 <dialog id="guide">
   <div class="close"><button id="closeGuide">关闭</button></div>
   <div class="guide" translate="no"><div data-lang="zh"><!--__GUIDE__--></div><div data-lang="en"><!--__GUIDE_EN__--></div></div>
+</dialog>
+
+<dialog id="demo" class="demo">
+  <div class="close"><button id="closeDemo">关闭</button></div>
+  <video id="demoVid" controls playsinline preload="none" src="video/demo-zh.mp4"></video>
 </dialog>
 
 <dialog id="news">

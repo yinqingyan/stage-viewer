@@ -156,6 +156,12 @@ $('newsBtn').onclick = () => {
 $('closeNews').onclick = () => $('news').close();
 $('news').onclick = e => e.target === $('news') && $('news').close();
 
+// ---------- 演示视频（中文版）：弹窗里播放，关掉就暂停 ----------
+$('demoBtn').onclick = () => { $('demo').showModal(); $('demoVid').play().catch(() => {}); };
+$('closeDemo').onclick = () => $('demo').close();
+$('demo').onclick = e => e.target === $('demo') && $('demo').close();
+$('demo').addEventListener('close', () => $('demoVid').pause());
+
 // ---------- 1. 选择模型 ----------
 const drop = $('drop');
 $('file').onchange = e => e.target.files[0] && load(e.target.files[0]);

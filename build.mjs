@@ -36,6 +36,7 @@ mkdirSync('dist', { recursive: true });
 writeFileSync('dist/舞美生成器.html', page);
 mkdirSync('dist/video', { recursive: true });
 for (const l of ['zh', 'en']) copyFileSync(`docs/video/guide-${l}.mp4`, `dist/video/guide-${l}.mp4`);  // 网页上的「下载视频」
+copyFileSync('docs/video/demo-zh.mp4', 'dist/video/demo-zh.mp4');  // 头图「看演示视频」，只有中文版
 console.log(`生成器：dist/舞美生成器.html（${(page.length / 1024).toFixed(0)} KB）`);
 
 rmSync('dist/stage-viewer-skill.zip', { force: true });
