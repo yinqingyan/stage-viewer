@@ -155,9 +155,6 @@ const EN = {
   '复制机位配置，放进配置文件 cameras': 'Copy the camera config (for the "cameras" field)',
   '角度 0°': 'Angle 0°', '角度 90°': 'Angle 90°', '速度': 'Speed', '高度预设': 'Height preset',
   '关：横移，朝向不变；开：边移边摇，一直对准对准点': 'Off: slide, keep the heading. On: pan to stay on the target',
-  // 秀导走位版（页面里有，暂未整体翻译）
-  '舞美图': 'Floor plan', '导入平面图': 'Import plan', '去掉': 'Remove', '图片实际宽度': 'Image width', '米': 'm',
-  '人员': 'Performers', '标记': 'Cues', '顺时针转 90°': 'Rotate 90° clockwise', '空格': 'Space',
 };
 
 // 生成器等模块补充自己的词条

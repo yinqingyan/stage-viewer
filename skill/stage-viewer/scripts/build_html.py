@@ -5,7 +5,6 @@
   python3 build_html.py 模型.fbx                          # 生成 模型.html
   python3 build_html.py 模型.fbx -o 输出.html -c 配置.json --title 晚会名
   python3 build_html.py 模型.fbx --inspect                # 只检查：构件名、贴图是否嵌入、单位
-  python3 build_html.py --show --title 晚会名 -o 秀导走位.html  # 秀导版不带模型，网页里导入舞美平面图
 """
 import argparse, base64, gzip, json, os, re, struct, sys
 
@@ -120,25 +119,17 @@ def report(info):
 
 def main():
     ap = argparse.ArgumentParser(description='3D 模型 → 单文件 HTML 舞美查看器')
-    ap.add_argument('model', nargs='?', help='.fbx 或 .glb 文件（加 --show 时可省略，网页里导入舞美平面图）')
+    ap.add_argument('model', help='.fbx 或 .glb 文件')
     ap.add_argument('-o', '--output', help='输出 html 路径（默认与模型同名）')
     ap.add_argument('-c', '--config', help='配置 JSON（观众席朝向、升降屏等，见 SKILL.md）')
     ap.add_argument('--title', help='页面标题，如晚会名称')
     ap.add_argument('--inspect', action='store_true', help='只检查模型，列出全部构件名，不生成')
-    ap.add_argument('--show', action='store_true', help='生成秀导走位版（导入音乐、时间码、演员站位和路线、导出截图）')
     a = ap.parse_args()
 
-    if not a.model:
-        if not a.show:
-            sys.exit('请给出模型文件。只有秀导版（--show）可以不带模型')
-        if not a.output:
-            sys.exit('不带模型时请用 -o 指定输出文件，如 -o 秀导走位.html')
-        if a.inspect:
-            sys.exit('--inspect 需要模型文件')
-    ext = os.path.splitext(a.model or '')[1].lower()
-    if a.model and ext not in ('.fbx', '.glb', '.obj', '.3ds', '.dae'):
+    ext = os.path.splitext(a.model)[1].lower()
+    if ext not in ('.fbx', '.glb', '.obj', '.3ds', '.dae'):
         sys.exit('只支持 .fbx、.glb、.obj、.3ds、.dae。其他格式请先在建模软件里导出为 FBX 或 GLB。')
-    raw = open(a.model, 'rb').read() if a.model else None
+    raw = open(a.model, 'rb').read()
 
     if ext == '.fbx':
         try:
@@ -160,10 +151,8 @@ def main():
         t['image'] = f'data:{mime};base64,' + base64.b64encode(open(path, 'rb').read()).decode('ascii')
     if a.title:
         config['title'] = a.title
-    if a.show:
-        config['app'] = 'show'
     stage = {
-        'model': raw and {'format': ext[1:], 'gzip': True, 'data': base64.b64encode(gzip.compress(raw, 9, mtime=0)).decode('ascii')},
+        'model': {'format': ext[1:], 'gzip': True, 'data': base64.b64encode(gzip.compress(raw, 9, mtime=0)).decode('ascii')},
         'config': config,
     }
     template = open(TEMPLATE, encoding='utf8').read()

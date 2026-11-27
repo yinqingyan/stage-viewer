@@ -12,7 +12,6 @@ import { buildProps } from './props.js';
 import { buildLights } from './lights.js';
 import { setupCameras } from './cameras.js';
 import { setupDirector } from './director.js';
-import { setupShow } from './show.js';
 import { setupMachines, KINDS } from './machines.js';
 import { SURFACES, SWATCHES, surfaceMaterial } from './surfaces.js';
 import { setupOrbitVideo } from './orbitvideo.js';
@@ -36,7 +35,6 @@ const CFG = {
   aim: null,           // 可选：{ floorBelow: 3 } 地上的灯朝上、天上的灯朝观众席，见 lights.js
   seats: { minHeight: 0.3, maxHeight: 0.6, maxLength: 1.6 },
   unit: null,          // 可选：模型里 1 个单位是多少米（0.001 毫米、0.01 厘米、1 米、0.0254 英寸），null = 按文件自己记的或自动猜
-  app: 'viewer',       // 'show' = 秀导走位版（build_html.py --show）
   ...STAGE.config,
 };
 // 英文界面：整页按 i18n.js 的词表翻译，之后各模块插进来的文字也会自动翻
@@ -45,7 +43,7 @@ if (CFG.lang === 'en') translatePage();
 CFG.title ||= CFG.lang === 'en' ? 'Stage Viewer' : '三维查看';
 const AUDIENCE_SIDE = new URLSearchParams(location.search).get('audience') || CFG.audience;
 // 项目名：生成时的 title 是默认值，点右上角的名字可以改，存在本机。
-// 机位、走位的存储键仍用生成时的 title，改名不会丢数据
+// 机位的存储键仍用生成时的 title，改名不会丢数据
 const nameKey = 'stage-name:' + CFG.title, nameEl = document.getElementById('name');
 let projectName = CFG.title;
 function setProjectName(n) {
@@ -203,13 +201,6 @@ function onLoad(root) {
   lights = buildLights(scene, model, CFG.fixtures, meshes, aim, CFG.lightGroups);
   setupLights(lights);
   setupSpeakers(CFG.speakers);
-  if (CFG.app === 'show') {
-    person.visible = false;
-    controls.enabled = false;
-    show = setupShow({ renderer, scene, meshes, size, center, audienceDir, storageKey: 'stage-show:' + CFG.title, title: () => projectName, setTitle: setProjectName });
-    applyMode(mode);
-    return;
-  }
   cams = setupCameras({
     scene, renderer, mainCamera: camera, meshes, floorAt,
     stageCenter: stageFront(), stageDir: audienceDir().negate(), storageKey: 'stage-cams:' + CFG.title, initial: CFG.cameras,
@@ -279,22 +270,7 @@ function fitUnits(root, zUp) {
 }
 
 const failed = msg => document.querySelector('#loading div').textContent = msg;
-// 秀导版可以不带模型：只用导入的舞美平面图
-function showOnly() {
-  size = new THREE.Vector3(40, 0, 30);
-  center = new THREE.Vector3();
-  grid = new THREE.Group();
-  const coarse = new THREE.GridHelper(100, 20, 0x3c4150, 0x3c4150);
-  coarse.position.y = 0.002;
-  grid.add(new THREE.GridHelper(100, 100, 0x2e323c, 0x22252d), coarse);
-  scene.add(grid);
-  document.getElementById('loading').remove();
-  controls.enabled = false;
-  show = setupShow({ renderer, scene, meshes, size, center, audienceDir, storageKey: 'stage-show:' + CFG.title, title: () => projectName, setTitle: setProjectName });
-}
-
-// 等本文件其余部分（show 等变量）初始化完再启动
-if (!STAGE.model) CFG.app === 'show' ? Promise.resolve().then(showOnly) : failed('页面里没有模型数据，请用 build_html.py 生成');
+if (!STAGE.model) failed('页面里没有模型数据，请用 build_html.py 生成');
 else loadModel(STAGE.model).then(onLoad).catch(err => failed('模型加载失败：' + err.message));
 
 // 1.75m 人物参照
@@ -495,7 +471,7 @@ const ray = new THREE.Raycaster(), ptr = new THREE.Vector2();
 let down = null;
 canvas.addEventListener('pointerdown', e => down = [e.clientX, e.clientY]);
 canvas.addEventListener('pointerup', e => {
-  if (dp?.on || show || seatView.on) return;  // 观众视角里点击是选座位
+  if (dp?.on || seatView.on) return;  // 观众视角里点击是选座位
   if (!down || Math.hypot(e.clientX - down[0], e.clientY - down[1]) > 5) return;
   ptr.set(e.clientX / innerWidth * 2 - 1, -e.clientY / innerHeight * 2 + 1);
   ray.setFromCamera(ptr, camera);
@@ -718,7 +694,7 @@ document.querySelectorAll('#side section').forEach(sec => {
   if (matchMedia('(max-width:600px)').matches) sec.classList.add('closed');
 });
 
-let lights = null, cams = null, dp = null, show = null, machines = null;
+let lights = null, cams = null, dp = null, machines = null;
 // 新机位默认对准舞台前区：屏幕中心往观众方向 6 米、台面以上 1.5 米（人胸口高度）；没有屏幕就用模型中心
 function stageFront() {
   const b = new THREE.Box3();
@@ -879,7 +855,7 @@ function updateWalk(dt) {
 const FLY_SPEED = 12, FLY_KEYS = ['KeyW', 'KeyA', 'KeyS', 'KeyD', 'KeyQ', 'KeyE', 'ShiftLeft', 'ShiftRight'];
 const fly = new Set();
 addEventListener('keydown', e => {
-  if (walk.on || dp?.on || show || !FLY_KEYS.includes(e.code) || /INPUT|SELECT/.test(e.target.tagName)) return;
+  if (walk.on || dp?.on || !FLY_KEYS.includes(e.code) || /INPUT|SELECT/.test(e.target.tagName)) return;
   fly.add(e.code);
   tween = null;
   if (currentView) {
@@ -1161,12 +1137,10 @@ renderer.setAnimationLoop(now => {
     updateFly(dt);
     controls.update();
   }
-  show?.tick(dt);
   renderFrame();
 });
 function renderFrame() {
-  if (show) show.render();
-  else if (dp?.on) dp.render();
+  if (dp?.on) dp.render();
   else renderer.render(scene, camera);
   cams?.renderOverlay(dp?.on ? dp.camera : camera);
   if (dp?.on) cams?.renderPip();  // 机位窗口只在导摄模式显示

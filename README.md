@@ -54,7 +54,6 @@
 ```bash
 python3 skill/stage-viewer/scripts/build_html.py 模型.fbx -c 配置.json -o 输出.html
 python3 skill/stage-viewer/scripts/build_html.py 模型.fbx --inspect   # 列出构件名、检查贴图是否嵌入
-python3 skill/stage-viewer/scripts/build_html.py --show --title "演出名称" -o 秀导走位.html   # 秀导走位版
 ```
 
 支持 .fbx、.glb、.obj、.3ds、.dae。配置字段见 `skill/stage-viewer/SKILL.md`，示例在 `skill/stage-viewer/examples/`。
@@ -72,7 +71,7 @@ node build.mjs        # 打包查看器模板和生成器网页（dist/舞美生
 ### 目录
 
 - `src/generator.html`、`src/generator.js`：生成器网页
-- `src/main.js`：查看器入口；`lights.js` 灯光，`machines.js` 机械，`props.js` 桌椅，`cameras.js`、`director.js` 机位和导摄，`show.js` 秀导走位，`i18n.js` 中英文
+- `src/main.js`：查看器入口；`lights.js` 灯光，`machines.js` 机械，`props.js` 桌椅，`cameras.js`、`director.js` 机位和导摄，`i18n.js` 中英文
 - `src/fbx.js`：读 FBX、识别重复的灯具桌椅、生成配置、精简模型（与 `fbx_strip.py` 结果逐字节相同）
 - `src/guess.js`：按名字猜用途和型号
 - `src/vendor/FBXLoader.js`：three.js 的 FBX 读取器，打了补丁（3ds Max / V-Ray 材质、旋转动画、单位）

@@ -54,7 +54,6 @@ Export settings and troubleshooting are in the [model preparation guide](docs/mo
 ```bash
 python3 skill/stage-viewer/scripts/build_html.py model.fbx -c config.json -o out.html
 python3 skill/stage-viewer/scripts/build_html.py model.fbx --inspect   # list parts, check textures are embedded
-python3 skill/stage-viewer/scripts/build_html.py --show --title "Show name" -o blocking.html   # blocking/choreography version
 ```
 
 Accepts .fbx, .glb, .obj, .3ds and .dae. Config fields are described in `skill/stage-viewer/SKILL.md`, with examples in `skill/stage-viewer/examples/`.
@@ -72,7 +71,7 @@ node build.mjs        # build the viewer template and the generator page (dist/è
 ### Layout
 
 - `src/generator.html`, `src/generator.js`: the generator page
-- `src/main.js`: viewer entry; `lights.js` lights, `machines.js` machinery, `props.js` furniture, `cameras.js` and `director.js` camera positions, `show.js` blocking, `i18n.js` Chinese/English
+- `src/main.js`: viewer entry; `lights.js` lights, `machines.js` machinery, `props.js` furniture, `cameras.js` and `director.js` camera positions, `i18n.js` Chinese/English
 - `src/fbx.js`: reads FBX, finds repeated fixtures and furniture, builds the config, slims the model (byte-identical to `fbx_strip.py`)
 - `src/guess.js`: guesses role and model from names
 - `src/vendor/FBXLoader.js`: three.js FBX loader, patched (3ds Max / V-Ray materials, rotation animation, units)
